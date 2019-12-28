@@ -88,36 +88,22 @@ static void MX_DMA_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+uint8_t get_row(uint16_t r) {
+	uint8_t ret;
+	HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_RESET);
+    HAL_Delay(1);
+	ret = (uint8_t) (~GPIOA->IDR & 0xFF);
+	HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_SET);
+	return ret;
+}
+
 void get_rows(uint8_t dst[6]) {
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_RESET);
-    HAL_Delay(1);
-	dst[0] = (uint8_t) (~GPIOA->IDR & 0xFF);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_10, GPIO_PIN_SET);
-
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_RESET);
-    HAL_Delay(1);
-	dst[1] = (uint8_t) (~GPIOA->IDR & 0xFF);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_11, GPIO_PIN_SET);
-
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
-    HAL_Delay(1);
-	dst[2] = (uint8_t) (~GPIOA->IDR & 0xFF);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
-
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_RESET);
-    HAL_Delay(1);
-	dst[3] = (uint8_t) (~GPIOA->IDR & 0xFF);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);
-
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET);
-    HAL_Delay(1);
-	dst[4] = (uint8_t) (~GPIOA->IDR & 0xFF);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET);
-
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
-    HAL_Delay(1);
-	dst[5] = (uint8_t) (~GPIOA->IDR & 0xFF);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_SET);
+	dst[0] = get_row(GPIO_PIN_10);
+	dst[1] = get_row(GPIO_PIN_11);
+	dst[2] = get_row(GPIO_PIN_12);
+	dst[3] = get_row(GPIO_PIN_13);
+	dst[4] = get_row(GPIO_PIN_14);
+	dst[5] = get_row(GPIO_PIN_15);
 }
 
 
