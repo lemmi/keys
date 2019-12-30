@@ -60,6 +60,7 @@ Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_core.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ctlreq.c \
 Middlewares/ST/STM32_USB_Device_Library/Core/Src/usbd_ioreq.c \
 Src/main.c \
+Src/layouts.c \
 Src/usb_device.c \
 Src/usbd_conf.c \
 Src/usbd_desc.c \
