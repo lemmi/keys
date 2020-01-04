@@ -165,6 +165,8 @@ void USB_IRQHandler(void)
   HAL_PCD_IRQHandler(&hpcd_USB_FS);
   /* USER CODE BEGIN USB_IRQn 1 */
 
+  USB_EVENT = 1;
+
   /* USER CODE END USB_IRQn 1 */
 }
 

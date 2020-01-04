@@ -51,6 +51,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 
+uint8_t USB_EVENT;
 
 /* USER CODE END PV */
 
@@ -65,26 +66,6 @@ static void MX_DMA_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-uint8_t get_row(uint16_t r) {
-	uint8_t ret;
-	HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_RESET);
-    HAL_Delay(1);
-	ret = (uint8_t) (~GPIOA->IDR & 0xFF);
-	HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_SET);
-	return ret;
-}
-
-void get_rows(uint8_t dst[6]) {
-	dst[0] = get_row(GPIO_PIN_10);
-	dst[1] = get_row(GPIO_PIN_11);
-	dst[2] = get_row(GPIO_PIN_12);
-	dst[3] = get_row(GPIO_PIN_13);
-	dst[4] = get_row(GPIO_PIN_14);
-	dst[5] = get_row(GPIO_PIN_15);
-}
-
-
 
 /* USER CODE END 0 */
 
@@ -128,9 +109,13 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint8_t report[8] = {0};
   uint8_t last_rows[ROWS] = {0};
+  Layout_t *layout = lyt_select_layout();
   while (1)
   {
-	  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	  USB_EVENT = 0;
+	  while (!USB_EVENT) {
+		  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+	  }
 
 
       {
@@ -148,7 +133,7 @@ int main(void)
           report[0] = 0;
           memset(&report[2], 0, 6);
 
-          pressed = get_pressed(buttons, &report[0], rows);
+          pressed = lyt_get_pressed(layout, buttons, &report[0], rows);
           if (pressed > 6) {
               pressed = 6;
           }

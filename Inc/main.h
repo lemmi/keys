@@ -60,6 +60,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 /* USER CODE BEGIN Private defines */
 
+extern uint8_t USB_EVENT;
 
 /* USER CODE END Private defines */
 

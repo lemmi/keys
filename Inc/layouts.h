@@ -136,10 +136,14 @@
 #define UKEY_BIT_RIGHT_ALT (1 << 6)
 #define UKEY_BIT_RIGHT_GUI (1 << 7)
 
-// extern LAYOUTS[][ROWS][COLS];
+typedef uint8_t Layout_t[ROWS][COLS];
 
-uint8_t modmask(const uint8_t);
-uint8_t is_modkey(const uint8_t);
-uint8_t get_pressed(uint8_t[NSWITCH], uint8_t *, const uint8_t[ROWS]);
+//uint8_t get_row(uint16_t);
+void get_rows(uint8_t[ROWS]);
+
+//uint8_t lyt_modmask(const uint8_t);
+//uint8_t lyt_is_modkey(const uint8_t);
+uint8_t lyt_get_pressed(Layout_t *, uint8_t[NSWITCH], uint8_t *, const uint8_t[ROWS]);
+Layout_t *lyt_select_layout();
 
 #endif
