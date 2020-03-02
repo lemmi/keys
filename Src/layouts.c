@@ -148,7 +148,7 @@ static uint8_t get_row(uint16_t r) {
     uint8_t ret;
 
     // select the row to scan
-    HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_SET);
 
     // add some delay to not miss any input
     for (int i = 0; i < 8; i++) {
@@ -156,10 +156,10 @@ static uint8_t get_row(uint16_t r) {
     }
 
     // read out all the pressed buttons in the selected row
-    ret = (uint8_t) (~GPIOA->IDR & 0xFF);
+    ret = (uint8_t) (GPIOA->IDR & 0xFF);
 
     // deselct the row
-    HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_RESET);
     return ret;
 }
 
