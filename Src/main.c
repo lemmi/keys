@@ -109,7 +109,10 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   uint8_t report[8] = {0};
   uint8_t last_rows[ROWS] = {0};
-  Layout_t *layout = lyt_select_layout();
+  const uint16_t (*hand)[ROWS];
+
+  Layout_t *layout;
+  lyt_select_layout(&layout, &hand);
   while (1)
   {
 	  USB_EVENT = 0;
@@ -123,7 +126,7 @@ int main(void)
           uint8_t buttons[NSWITCH] = {0};
           uint8_t pressed = 0;
 
-          get_rows(rows);
+          get_rows(rows, *hand);
           if (memcmp(rows, last_rows, ROWS) == 0) {
               continue;
           }
@@ -313,7 +316,7 @@ static void MX_GPIO_Init(void)
                           |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PA8 PA10 PA15 */

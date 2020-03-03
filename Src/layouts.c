@@ -11,21 +11,21 @@ Layout_t LAYOUT_SELECT = {
 };
 
 Layout_t LAYOUT_LEFT = {
-    { UKEY_ESCAPE , UKEY_F01          , UKEY_F02        , UKEY_F03              , UKEY_F04   , 0             , UKEY_F05 , UKEY_F06   },
-    { 0           , 0                 , UKEY_GRAVE      , UKEY_1                , UKEY_2     , UKEY_3        , UKEY_4   , UKEY_5     },
-    { 0           , UKEY_TAB          , UKEY_Q          , UKEY_W                , UKEY_E     , UKEY_R        , UKEY_T   , UKEY_B     },
-    { 0           , 0                 , 0               , UKEY_A                , UKEY_S     , UKEY_D        , UKEY_F   , UKEY_G     },
-    { 0           , 0                 , UKEY_LEFT_SHIFT , UKEY_BACKSLASH_NON_US , UKEY_Z     , UKEY_X        , UKEY_C   , UKEY_V     },
-    { 0           , UKEY_LEFT_CONTROL , UKEY_LEFT_GUI   , UKEY_LEFT_ALT         , UKEY_ENTER , UKEY_LEFT_GUI , UKEY_TAB , UKEY_SPACE },
+     { UKEY_ESCAPE , UKEY_F01 , UKEY_F02        , UKEY_F03              , UKEY_F04      , UKEY_B        , UKEY_F05   , UKEY_F06   },
+     { 0           , 0        , UKEY_GRAVE      , UKEY_1                , UKEY_2        , UKEY_3        , UKEY_4     , UKEY_5     },
+     { 0           , 0        , UKEY_TAB        , UKEY_Q                , UKEY_W        , UKEY_E        , UKEY_R     , UKEY_T     },
+     { 0           , 0        , 0               , UKEY_A                , UKEY_S        , UKEY_D        , UKEY_F     , UKEY_G     },
+     { 0           , 0        , UKEY_LEFT_SHIFT , UKEY_BACKSLASH_NON_US , UKEY_Z        , UKEY_X        , UKEY_C     , UKEY_V     },
+     { 0           , 0        , 0               , UKEY_LEFT_CONTROL     , UKEY_LEFT_GUI , UKEY_LEFT_ALT , UKEY_ENTER , UKEY_SPACE },
 };
 
 Layout_t LAYOUT_RIGHT = {
-    { UKEY_F07   , UKEY_F08    , 0                  , UKEY_F09    , UKEY_F10       , UKEY_F11         , UKEY_F12       , 0           },
-    { UKEY_6     , UKEY_7      , UKEY_8             , UKEY_9      , UKEY_0         , UKEY_MINUS       , UKEY_EQUAL     , UKEY_DELETE },
-    { UKEY_Y     , UKEY_U      , UKEY_I             , UKEY_O      , UKEY_P         , UKEY_LBRACKET    , UKEY_RBRACKET  , UKEY_ENTER  },
-    { UKEY_H     , UKEY_J      , UKEY_K             , UKEY_L      , UKEY_SEMICOLON , UKEY_APOSTROPHE  , UKEY_BACKSLASH , UKEY_ENTER  },
-    { UKEY_N     , UKEY_M      , UKEY_COMMA         , UKEY_PERIOD , UKEY_SLASH     , UKEY_RIGHT_SHIFT , UKEY_UP        , 0           },
-    { UKEY_SPACE , UKEY_DELETE , UKEY_DELETEFORWARD , UKEY_ENTER  , UKEY_RIGHT_ALT , UKEY_LEFT        , UKEY_DOWN      , UKEY_RIGHT  },
+    { UKEY_F07   , UKEY_F08   , UKEY_B      , UKEY_F09           , UKEY_F10       , UKEY_F11         , UKEY_F12       , 0           },
+    { UKEY_6     , UKEY_7     , UKEY_8      , UKEY_9             , UKEY_0         , UKEY_MINUS       , UKEY_EQUAL     , UKEY_DELETE },
+    { UKEY_Y     , UKEY_U     , UKEY_I      , UKEY_O             , UKEY_P         , UKEY_LBRACKET    , UKEY_RBRACKET  , 0           },
+    { UKEY_H     , UKEY_J     , UKEY_K      , UKEY_L             , UKEY_SEMICOLON , UKEY_APOSTROPHE  , UKEY_BACKSLASH , UKEY_ENTER  },
+    { UKEY_N     , UKEY_M     , UKEY_COMMA  , UKEY_PERIOD        , UKEY_SLASH     , UKEY_RIGHT_SHIFT , UKEY_UP        , 0           },
+    { UKEY_SPACE , UKEY_ENTER , UKEY_DELETE , UKEY_DELETEFORWARD , UKEY_RIGHT_ALT , UKEY_LEFT        , UKEY_DOWN      , UKEY_RIGHT  },
 };
 
 Layout_t LAYOUT_LEFT_ADNW = {
@@ -45,6 +45,25 @@ Layout_t *Layouts[] = {
 };
 
 #define N_Layouts (sizeof(Layouts) / sizeof(Layouts[0]))
+
+const uint16_t ROWS_HAND[2][ROWS] = {
+{
+    GPIO_PIN_10,
+    GPIO_PIN_11,
+    GPIO_PIN_12,
+    GPIO_PIN_13,
+    GPIO_PIN_14,
+    GPIO_PIN_15,
+},
+{
+    GPIO_PIN_9,
+    GPIO_PIN_8,
+    GPIO_PIN_7,
+    GPIO_PIN_6,
+    GPIO_PIN_5,
+    GPIO_PIN_4,
+}
+};
 
 static uint8_t lyt_modmask(const uint8_t k) {
     switch (k) {
@@ -111,15 +130,19 @@ static uint8_t lyt_count_pressed(Layout_t *layout, const uint8_t rows[ROWS]) {
     return lyt_get_pressed(layout, NULL, NULL, rows);
 }
 
-Layout_t *lyt_select_layout() {
+void lyt_select_layout(Layout_t **lyt, const uint16_t (**hand)[ROWS]) {
     uint8_t rows[ROWS];
     uint8_t buttons[NSWITCH];
+    uint8_t hand_idx = 1;
 
     while (1) {
         uint8_t layout_idx;
 
+        hand_idx = !hand_idx;
+        *hand = &ROWS_HAND[hand_idx];
+
         HAL_Delay(1);
-        get_rows(rows);
+        get_rows(rows, **hand);
 
         // wait until there is only a single button pressed
         if (lyt_get_pressed(Layouts[0], buttons, NULL, rows) != 1) {
@@ -137,14 +160,15 @@ Layout_t *lyt_select_layout() {
         // wait until no button is pressed, otherwise we start typing right away
         do {
             HAL_Delay(1);
-            get_rows(rows);
+            get_rows(rows, **hand);
         } while (lyt_count_pressed(Layouts[0], rows) > 0);
 
-        return Layouts[layout_idx];
+        *lyt = Layouts[layout_idx];
+        return;
     }
 }
 
-static uint8_t get_row(uint16_t r) {
+static uint8_t get_row(const uint16_t r) {
     uint8_t ret;
 
     // select the row to scan
@@ -163,11 +187,12 @@ static uint8_t get_row(uint16_t r) {
     return ret;
 }
 
-void get_rows(uint8_t dst[ROWS]) {
-    dst[0] = get_row(GPIO_PIN_10);
-    dst[1] = get_row(GPIO_PIN_11);
-    dst[2] = get_row(GPIO_PIN_12);
-    dst[3] = get_row(GPIO_PIN_13);
-    dst[4] = get_row(GPIO_PIN_14);
-    dst[5] = get_row(GPIO_PIN_15);
+
+void get_rows(uint8_t dst[ROWS], const uint16_t hand[ROWS]) {
+    dst[0] = get_row(hand[0]);
+    dst[1] = get_row(hand[1]);
+    dst[2] = get_row(hand[2]);
+    dst[3] = get_row(hand[3]);
+    dst[4] = get_row(hand[4]);
+    dst[5] = get_row(hand[5]);
 }
