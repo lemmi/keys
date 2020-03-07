@@ -171,6 +171,8 @@ void lyt_select_layout(Layout_t **lyt, const uint16_t (**hand)[ROWS]) {
 static uint8_t get_row(const uint16_t r) {
     uint8_t ret;
 
+    // wait until evenything is drained
+    while (GPIOA->IDR & 0xFF);
     // select the row to scan
     HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_SET);
 
@@ -184,6 +186,7 @@ static uint8_t get_row(const uint16_t r) {
 
     // deselct the row
     HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_RESET);
+
     return ret;
 }
 
