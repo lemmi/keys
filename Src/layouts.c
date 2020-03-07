@@ -16,7 +16,7 @@ Layout_t LAYOUT_LEFT = {
      { 0           , 0        , UKEY_TAB        , UKEY_Q                , UKEY_W        , UKEY_E        , UKEY_R     , UKEY_T     },
      { 0           , 0        , 0               , UKEY_A                , UKEY_S        , UKEY_D        , UKEY_F     , UKEY_G     },
      { 0           , 0        , UKEY_LEFT_SHIFT , UKEY_BACKSLASH_NON_US , UKEY_Z        , UKEY_X        , UKEY_C     , UKEY_V     },
-     { 0           , 0        , 0               , UKEY_LEFT_CONTROL     , UKEY_LEFT_GUI , UKEY_LEFT_ALT , UKEY_ENTER , UKEY_SPACE },
+     { 0           , 0        , 0               , UKEY_LEFT_CONTROL     , UKEY_LEFT_GUI , UKEY_LEFT_ALT , UKEY_SPACE , UKEY_ENTER },
 };
 
 Layout_t LAYOUT_RIGHT = {
@@ -25,7 +25,7 @@ Layout_t LAYOUT_RIGHT = {
     { UKEY_Y     , UKEY_U     , UKEY_I      , UKEY_O             , UKEY_P         , UKEY_LBRACKET    , UKEY_RBRACKET  , 0           },
     { UKEY_H     , UKEY_J     , UKEY_K      , UKEY_L             , UKEY_SEMICOLON , UKEY_APOSTROPHE  , UKEY_BACKSLASH , UKEY_ENTER  },
     { UKEY_N     , UKEY_M     , UKEY_COMMA  , UKEY_PERIOD        , UKEY_SLASH     , UKEY_RIGHT_SHIFT , UKEY_UP        , 0           },
-    { UKEY_SPACE , UKEY_ENTER , UKEY_DELETE , UKEY_DELETEFORWARD , UKEY_RIGHT_ALT , UKEY_LEFT        , UKEY_DOWN      , UKEY_RIGHT  },
+    { UKEY_ENTER , UKEY_SPACE , UKEY_DELETE , UKEY_DELETEFORWARD , UKEY_RIGHT_ALT , UKEY_LEFT        , UKEY_DOWN      , UKEY_RIGHT  },
 };
 
 Layout_t LAYOUT_LEFT_ADNW = {
