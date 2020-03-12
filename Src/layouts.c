@@ -1,5 +1,6 @@
 #include "layouts.h"
 #include "main.h"
+#include "flash.h"
 
 Layout_t LAYOUT_SELECT = {
     { 0, 0, 0, 0, 0, 0, 0, 0},
@@ -134,10 +135,21 @@ void lyt_select_layout(Layout_t **lyt, const uint16_t (**hand)[ROWS]) {
     uint8_t rows[ROWS];
     uint8_t buttons[NSWITCH];
     uint8_t hand_idx = 1;
+    uint8_t layout_idx = 0;
+
+    // check if we have a layout saved to flash
+    {
+        uint16_t saved = flash_layout_load();
+        if (saved != 0xFFFFU) {
+            layout_idx = (saved >> 0) & 0xFF;
+            hand_idx   = (saved >> 8) & 0xFF;
+            *lyt = Layouts[layout_idx];
+            *hand = &ROWS_HAND[hand_idx];
+            return;
+        }
+    }
 
     while (1) {
-        uint8_t layout_idx;
-
         hand_idx = !hand_idx;
         *hand = &ROWS_HAND[hand_idx];
 
@@ -153,19 +165,20 @@ void lyt_select_layout(Layout_t **lyt, const uint16_t (**hand)[ROWS]) {
         layout_idx = buttons[0];
 
         // check if there is a valid layout for the pressed button
-        if (layout_idx < 1 || layout_idx >= N_Layouts) {
-            continue;
+        if (layout_idx > 0 && layout_idx < N_Layouts) {
+            *lyt = Layouts[layout_idx];
+            break;
         }
-
-        // wait until no button is pressed, otherwise we start typing right away
-        do {
-            HAL_Delay(1);
-            get_rows(rows, **hand);
-        } while (lyt_count_pressed(Layouts[0], rows) > 0);
-
-        *lyt = Layouts[layout_idx];
-        return;
     }
+
+    // save the config
+    flash_layout_append((uint16_t) hand_idx << 8 | (uint16_t) layout_idx);
+
+    // wait until no button is pressed, otherwise we start typing right away
+    do {
+        HAL_Delay(1);
+        get_rows(rows, **hand);
+    } while (lyt_count_pressed(*lyt, rows) > 0);
 }
 
 static uint8_t get_row(const uint16_t r) {

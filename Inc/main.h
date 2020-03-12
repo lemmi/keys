@@ -58,6 +58,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define bInterfaceSubClass 1
+#define bInterfaceProtocol 1
 /* USER CODE BEGIN Private defines */
 
 extern uint8_t USB_EVENT;

@@ -78,7 +78,6 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
-  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -103,23 +102,23 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
-
-  /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
   uint8_t report[8] = {0};
   uint8_t last_rows[ROWS] = {0};
   const uint16_t (*hand)[ROWS];
 
   Layout_t *layout;
   lyt_select_layout(&layout, &hand);
+
+  /* USER CODE END 2 */
+
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
   while (1)
   {
 	  USB_EVENT = 0;
 	  while (!USB_EVENT) {
 		  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	  }
-
 
       {
           uint8_t rows[ROWS] = {0};
