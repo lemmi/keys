@@ -62,7 +62,7 @@ void Error_Handler(void);
 #define bInterfaceProtocol 1
 /* USER CODE BEGIN Private defines */
 
-extern uint8_t USB_EVENT;
+extern uint16_t USB_EVENT;
 
 /* USER CODE END Private defines */
 

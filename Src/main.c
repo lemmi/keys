@@ -51,7 +51,7 @@ DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 
-uint8_t USB_EVENT;
+uint16_t USB_EVENT;
 
 /* USER CODE END PV */
 
@@ -66,6 +66,8 @@ static void MX_DMA_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void GPIO_AS_INPUT();
+static void GPIO_AS_INT();
 
 /* USER CODE END 0 */
 
@@ -78,6 +80,7 @@ int main(void)
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
+  
 
   /* MCU Configuration--------------------------------------------------------*/
 
@@ -102,6 +105,8 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
+  GPIO_AS_INPUT();
+
   uint8_t report[8] = {0};
   uint8_t last_rows[ROWS] = {0};
   const uint16_t (*hand)[ROWS];
@@ -116,11 +121,28 @@ int main(void)
   while (1)
   {
 	  USB_EVENT = 0;
-	  while (!USB_EVENT) {
+	  while (USB_EVENT == 0) {
 		  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	  }
 
-      {
+	  if (USB_EVENT & USB_ISTR_SUSP) {
+		  GPIO_AS_INT();
+
+		  uint16_t all_rows = *hand[0] | *hand[1] | *hand[2] | *hand[3] | *hand[4] | *hand[5];
+		  HAL_GPIO_WritePin(GPIOB, all_rows, GPIO_PIN_SET);
+
+		  do {
+			  HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
+		  } while ((GPIOA->IDR & 0xFF) == 0);
+		  GPIO_AS_INPUT();
+
+		  HAL_GPIO_WritePin(GPIOB, all_rows, GPIO_PIN_RESET);
+
+
+		  HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
+		  HAL_Delay(10);
+		  HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
+	  } else {
           uint8_t rows[ROWS] = {0};
           uint8_t buttons[NSWITCH] = {0};
           uint8_t pressed = 0;
@@ -295,7 +317,7 @@ static void MX_GPIO_Init(void)
                            PA4 PA5 PA6 PA7 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3 
                           |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -322,10 +344,40 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_1_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI2_3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_3_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_15_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_15_IRQn);
+
 }
 
 /* USER CODE BEGIN 4 */
 
+static void GPIO_AS_INT() {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+	  /*Configure GPIO pins : PA0 PA1 PA2 PA3
+                           PA4 PA5 PA6 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
+static void GPIO_AS_INPUT() {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+	  /*Configure GPIO pins : PA0 PA1 PA2 PA3
+                           PA4 PA5 PA6 PA7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
 /* USER CODE END 4 */
 
 /**
