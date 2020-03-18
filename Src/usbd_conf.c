@@ -76,11 +76,6 @@ void HAL_PCD_MspInit(PCD_HandleTypeDef* pcdHandle)
     /* Peripheral interrupt init */
     HAL_NVIC_SetPriority(USB_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(USB_IRQn);
-    if(pcdHandle->Init.low_power_enable == 1)
-    {
-      /* Enable EXTI Line 18 for USB wakeup */
-      __HAL_USB_WAKEUP_EXTI_ENABLE_IT();
-    }
   /* USER CODE BEGIN USB_MspInit 1 */
 
   /* USER CODE END USB_MspInit 1 */
@@ -313,7 +308,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   hpcd_USB_FS.Init.dev_endpoints = 8;
   hpcd_USB_FS.Init.speed = PCD_SPEED_FULL;
   hpcd_USB_FS.Init.phy_itface = PCD_PHY_EMBEDDED;
-  hpcd_USB_FS.Init.low_power_enable = ENABLE;
+  hpcd_USB_FS.Init.low_power_enable = DISABLE;
   hpcd_USB_FS.Init.lpm_enable = ENABLE;
   hpcd_USB_FS.Init.battery_charging_enable = DISABLE;
   if (HAL_PCD_Init(&hpcd_USB_FS) != HAL_OK)
