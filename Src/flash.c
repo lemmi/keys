@@ -20,6 +20,7 @@ static uint16_t flash_layout_load_idx(uint32_t idx) {
 	}
 	return 0xFFFFU;
 }
+
 uint16_t flash_layout_load() {
 	uint32_t idx = flash_layout_idx();
 	return flash_layout_load_idx(idx);
@@ -34,9 +35,9 @@ static HAL_StatusTypeDef flash_layout_erase_all() {
 	erase.PageAddress = FLASH_LAST_PAGE_BASE;
 	erase.NbPages = 1;
 
-	if ((s = HAL_FLASH_Unlock())                     != HAL_OK) { return s; }
+	if ((s = HAL_FLASH_Unlock())					 != HAL_OK) { return s; }
 	if ((s = HAL_FLASHEx_Erase(&erase, &page_error)) != HAL_OK) { return s; }
-	if ((s = HAL_FLASH_Lock())                       != HAL_OK) { return s; }
+	if ((s = HAL_FLASH_Lock())						 != HAL_OK) { return s; }
 
 	return HAL_OK;
 }

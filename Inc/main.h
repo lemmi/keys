@@ -63,6 +63,7 @@ void Error_Handler(void);
 /* USER CODE BEGIN Private defines */
 
 extern uint16_t USB_EVENT;
+#define HISTORY_SIZE 3
 
 /* USER CODE END Private defines */
 
