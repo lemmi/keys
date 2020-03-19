@@ -91,7 +91,7 @@ static uint16_t k_all_rows(const Keys_t *k) {
 }
 
 static void k_scan(Keys_t *k) {
-	k->hist_idx = k->hist_idx % HISTORY_SIZE;
+	k->hist_idx = (k->hist_idx + 1) % HISTORY_SIZE;
 	get_rows(k->history[k->hist_idx], *k->hand);
 }
 
