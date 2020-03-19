@@ -86,6 +86,10 @@ typedef struct {
 	Hand_t *hand;
 } Keys_t;
 
+static void k_clear(Keys_t *k) {
+	memset(k, 0, sizeof(k->report) + sizeof(k->history) + sizeof(k->hist_idx));
+}
+
 static uint16_t k_all_rows(const Keys_t *k) {
 	return (*k->hand)[0] | (*k->hand)[1] | (*k->hand)[2] | (*k->hand)[3] | (*k->hand)[4] | (*k->hand)[5];
 }
@@ -166,7 +170,7 @@ int main(void)
 
 
 	Keys_t k;
-	memset(&k, 0, sizeof(k));
+	k_clear(&k);
 	lyt_select_layout(&k.layout, &k.hand);
 
 	State_t state = RUNNING;
@@ -197,6 +201,7 @@ loop_no_sleep:
 				k_report(&k);
 				break;
 			case SUSPEND_ENTER:
+				k_clear(&k);
 				GPIO_AS_INT();
 				HAL_GPIO_WritePin(GPIOB, k_all_rows(&k), GPIO_PIN_SET);
 				state = SUSPEND;
