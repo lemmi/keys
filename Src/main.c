@@ -218,10 +218,13 @@ loop_no_sleep:
 				}
 				break;
 			case REMOTE_WAKE:
+				// we need the systick to measure 10ms for the wakeup
+				HAL_InitTick(TICK_INT_PRIORITY);
 				HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
 				HAL_Delay(10);
 				HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
 				state=SUSPEND_EXIT;
+				SYSTICK_DISABLE();
 				goto loop_no_sleep;
 			case SUSPEND_EXIT:
 				HAL_GPIO_WritePin(GPIOB, k_all_rows(&k), GPIO_PIN_RESET);
