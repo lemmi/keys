@@ -126,10 +126,13 @@ static void k_report(Keys_t *k) {
 	USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, k->report, sizeof(k->report));
 }
 
-static void SYSTICK_DISABLE() {
+void HAL_SuspendTick() {
 	SysTick->CTRL &= ~(SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk);
 }
 
+void HAL_ResumeTick() {
+	SysTick->CTRL |= (SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk);
+}
 /* USER CODE END 0 */
 
 /**
@@ -167,7 +170,7 @@ int main(void)
 
 	GPIO_AS_INPUT();
 	// we have no need for systick. disable source and mask interrupt
-	SYSTICK_DISABLE();
+	HAL_SuspendTick();
 
 
 	Keys_t k;
@@ -219,12 +222,12 @@ loop_no_sleep:
 				break;
 			case REMOTE_WAKE:
 				// we need the systick to measure 10ms for the wakeup
-				HAL_InitTick(TICK_INT_PRIORITY);
+				HAL_ResumeTick();
 				HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
 				HAL_Delay(10);
 				HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
 				state=SUSPEND_EXIT;
-				SYSTICK_DISABLE();
+				HAL_SuspendTick();
 				goto loop_no_sleep;
 			case SUSPEND_EXIT:
 				HAL_GPIO_WritePin(GPIOB, k_all_rows(&k), GPIO_PIN_RESET);
