@@ -189,13 +189,13 @@ int main(void)
 loop_no_sleep:
 		switch (state) {
 			case RUNNING:
-				if (USB_EVENT == 0) {
-					break;
-				}
-
 				if (USB_EVENT & USB_ISTR_SUSP) {
 					state = SUSPEND_ENTER;
 					goto loop_no_sleep;
+				}
+
+				if (!(USB_EVENT & USB_ISTR_SOF)) {
+					break;
 				}
 
 				k_scan(&k);
