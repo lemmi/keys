@@ -126,6 +126,10 @@ static void k_report(Keys_t *k) {
 	USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, k->report, sizeof(k->report));
 }
 
+static void SYSTICK_DISABLE() {
+	SysTick->CTRL &= ~(SysTick_CTRL_ENABLE_Msk | SysTick_CTRL_TICKINT_Msk);
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -162,10 +166,8 @@ int main(void)
 	/* USER CODE BEGIN 2 */
 
 	GPIO_AS_INPUT();
-
-	//uint8_t report[8] = {0};
-	//uint8_t last_rows[ROWS] = {0};
-	//const uint16_t (*hand)[ROWS];
+	// we have no need for systick. disable source and mask interrupt
+	SYSTICK_DISABLE();
 
 
 	Keys_t k;
