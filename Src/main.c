@@ -170,12 +170,12 @@ int main(void)
 
 	GPIO_AS_INPUT();
 	// we have no need for systick. disable source and mask interrupt
-	HAL_SuspendTick();
 
 
 	Keys_t k;
 	k_clear(&k);
 	lyt_select_layout(&k.layout, &k.hand);
+	HAL_SuspendTick();
 
 	State_t state = RUNNING;
 
