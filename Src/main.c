@@ -221,10 +221,10 @@ loop_no_sleep:
 				}
 				break;
 			case REMOTE_WAKE:
-				// we need the systick to measure 10ms for the wakeup
+				// we need the systick to measure 15ms for the wakeup
 				HAL_ResumeTick();
 				HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
-				HAL_Delay(10);
+				HAL_Delay(15);
 				HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
 				state=SUSPEND_EXIT;
 				HAL_SuspendTick();
