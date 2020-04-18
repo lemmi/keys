@@ -206,6 +206,13 @@ loop_no_sleep:
 				break;
 			case SUSPEND_ENTER:
 				k_clear(&k);
+
+				// Delay monitoring for keypresses for a second to avoid
+				// instant wake-up from suspend
+				HAL_ResumeTick();
+				HAL_Delay(1000);
+				HAL_SuspendTick();
+
 				GPIO_AS_INT();
 				HAL_GPIO_WritePin(GPIOB, k_all_rows(&k), GPIO_PIN_SET);
 				state = SUSPEND;
