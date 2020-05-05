@@ -62,7 +62,7 @@ void Error_Handler(void);
 #define bInterfaceProtocol 1
 /* USER CODE BEGIN Private defines */
 
-extern uint16_t USB_EVENT;
+extern __IO uint16_t USB_EVENT;
 #define HISTORY_SIZE 3
 
 /* USER CODE END Private defines */
