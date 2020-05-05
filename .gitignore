@@ -69,6 +69,7 @@ dkms.conf
 # Session
 Session.vim
 Sessionx.vim
+.vim_session
 
 # Temporary
 .netrwhist
