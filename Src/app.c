@@ -92,7 +92,7 @@ void app() {
 	State_t state = RUNNING;
 
 	complete = 1;
-			HAL_HalfDuplex_EnableTransmitter(&huart1);
+	HAL_HalfDuplex_EnableTransmitter(&huart1);
 	while(1) {
 		USB_EVENT = 0;
 
@@ -156,6 +156,15 @@ loop_no_sleep:
 static void GPIO_AS_INT() {
 	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 
+	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE0);
+	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE1);
+	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE2);
+	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE3);
+	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE4);
+	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE5);
+	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE6);
+	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE7);
+
 	EXTI_InitStruct.Line_0_31 =
 		LL_EXTI_LINE_0 |
 		LL_EXTI_LINE_1 |
@@ -201,5 +210,41 @@ static void GPIO_AS_INPUT() {
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 	complete = 1;
+}
+
+void EXTI0_1_IRQHandler(void)
+{
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_0) != RESET) {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_0);
+  }
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_1) != RESET) {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_1);
+  }
+}
+
+void EXTI2_3_IRQHandler(void)
+{
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_2) != RESET) {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
+  }
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_3) != RESET) {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_3);
+  }
+}
+
+void EXTI4_15_IRQHandler(void)
+{
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET) {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
+  }
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_5) != RESET) {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_5);
+  }
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_6) != RESET) {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_6);
+  }
+  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_7) != RESET) {
+    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_7);
+  }
 }
 
