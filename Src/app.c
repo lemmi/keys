@@ -100,12 +100,6 @@ void app() {
 	while(1) {
 		USB_EVENT = 0;
 
-
-		if (complete) {
-			complete = 0;
-			HAL_UART_Transmit_DMA(&huart1, (uint8_t *) k.report, sizeof(k.report));
-		}
-
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 
 loop_no_sleep:
@@ -122,6 +116,11 @@ loop_no_sleep:
 
 				k_scan(&k);
 				k_report(&k);
+				if (complete) {
+					complete = 0;
+					HAL_UART_Transmit_DMA(&huart1, (uint8_t *) k.report, sizeof(k.report));
+				}
+
 				break;
 			case SUSPEND_ENTER:
 				k_clear(&k);
