@@ -2,7 +2,7 @@
 Dma.Request0=USART1_TX
 Dma.RequestsNb=1
 Dma.USART1_TX.0.Direction=DMA_MEMORY_TO_PERIPH
-Dma.USART1_TX.0.Instance=DMA1_Channel2
+Dma.USART1_TX.0.Instance=DMA1_Channel4
 Dma.USART1_TX.0.MemDataAlignment=DMA_MDATAALIGN_BYTE
 Dma.USART1_TX.0.MemInc=DMA_MINC_ENABLE
 Dma.USART1_TX.0.Mode=DMA_NORMAL
@@ -58,7 +58,7 @@ Mcu.UserConstants=
 Mcu.UserName=STM32F072C8Tx
 MxCube.Version=5.6.1
 MxDb.Version=DB.5.0.60
-NVIC.DMA1_Channel2_3_IRQn=true\:0\:0\:false\:false\:true\:false\:true
+NVIC.DMA1_Channel4_5_6_7_IRQn=true\:0\:0\:false\:false\:true\:false\:true
 NVIC.ForceEnableDMAVector=true
 NVIC.HardFault_IRQn=true\:0\:0\:false\:false\:true\:false\:false
 NVIC.NonMaskableInt_IRQn=true\:0\:0\:false\:false\:true\:false\:false
