@@ -7,6 +7,8 @@
 #include "layouts.h"
 
 __IO uint16_t USB_EVENT;
+__IO int complete;
+extern UART_HandleTypeDef huart1;
 
 static void GPIO_AS_INPUT();
 static void GPIO_AS_INT();
@@ -89,8 +91,16 @@ void app() {
 
 	State_t state = RUNNING;
 
+	complete = 1;
+			HAL_HalfDuplex_EnableTransmitter(&huart1);
 	while(1) {
 		USB_EVENT = 0;
+
+
+		if (complete) {
+			complete = 0;
+			HAL_UART_Transmit_DMA(&huart1, (uint8_t *) k.report, sizeof(k.report));
+		}
 
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 
@@ -112,7 +122,7 @@ loop_no_sleep:
 			case SUSPEND_ENTER:
 				k_clear(&k);
 				GPIO_AS_INT();
-				HAL_GPIO_WritePin(GPIOB, k_all_rows(&k), GPIO_PIN_SET);
+				LL_GPIO_SetOutputPin(GPIOB, k_all_rows(&k));
 				state = SUSPEND;
 				break;
 			case SUSPEND:
@@ -129,13 +139,13 @@ loop_no_sleep:
 				// we need the systick to measure 15ms for the wakeup
 				HAL_ResumeTick();
 				HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
-				HAL_Delay(15);
+				HAL_Delay(10);
 				HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
 				state=SUSPEND_EXIT;
 				HAL_SuspendTick();
 				goto loop_no_sleep;
 			case SUSPEND_EXIT:
-				HAL_GPIO_WritePin(GPIOB, k_all_rows(&k), GPIO_PIN_RESET);
+				LL_GPIO_ResetOutputPin(GPIOB, k_all_rows(&k));
 				GPIO_AS_INPUT();
 				state = RUNNING;
 				break;
@@ -144,22 +154,52 @@ loop_no_sleep:
 }
 
 static void GPIO_AS_INT() {
-	GPIO_InitTypeDef GPIO_InitStruct = {0};
-	/*Configure GPIO pins : PA0 PA1 PA2 PA3
-	  PA4 PA5 PA6 PA7 */
-	GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-		|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
+
+	EXTI_InitStruct.Line_0_31 =
+		LL_EXTI_LINE_0 |
+		LL_EXTI_LINE_1 |
+		LL_EXTI_LINE_2 |
+		LL_EXTI_LINE_3 |
+		LL_EXTI_LINE_4 |
+		LL_EXTI_LINE_5 |
+		LL_EXTI_LINE_6 |
+		LL_EXTI_LINE_7;
+	EXTI_InitStruct.LineCommand = ENABLE;
+	EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
+	EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
+	LL_EXTI_Init(&EXTI_InitStruct);
+
+	NVIC_SetPriority(EXTI0_1_IRQn, 0);
+	NVIC_EnableIRQ(EXTI0_1_IRQn);
+	NVIC_SetPriority(EXTI2_3_IRQn, 0);
+	NVIC_EnableIRQ(EXTI2_3_IRQn);
+	NVIC_SetPriority(EXTI4_15_IRQn, 0);
+	NVIC_EnableIRQ(EXTI4_15_IRQn);
 }
 static void GPIO_AS_INPUT() {
-	GPIO_InitTypeDef GPIO_InitStruct = {0};
-	/*Configure GPIO pins : PA0 PA1 PA2 PA3
-	  PA4 PA5 PA6 PA7 */
-	GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
-		|GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
+
+	EXTI_InitStruct.Line_0_31 =
+		LL_EXTI_LINE_0 |
+		LL_EXTI_LINE_1 |
+		LL_EXTI_LINE_2 |
+		LL_EXTI_LINE_3 |
+		LL_EXTI_LINE_4 |
+		LL_EXTI_LINE_5 |
+		LL_EXTI_LINE_6 |
+		LL_EXTI_LINE_7;
+	EXTI_InitStruct.LineCommand = DISABLE;
+	EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
+	EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_NONE;
+	LL_EXTI_Init(&EXTI_InitStruct);
+
+	NVIC_DisableIRQ(EXTI0_1_IRQn);
+	NVIC_DisableIRQ(EXTI2_3_IRQn);
+	NVIC_DisableIRQ(EXTI4_15_IRQn);
 }
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+	complete = 1;
+}
+

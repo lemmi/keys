@@ -49,20 +49,20 @@ Layout_t *Layouts[] = {
 
 const uint16_t ROWS_HAND[2][ROWS] = {
 	{
-		GPIO_PIN_10,
-		GPIO_PIN_11,
-		GPIO_PIN_12,
-		GPIO_PIN_13,
-		GPIO_PIN_14,
-		GPIO_PIN_15,
+		LL_GPIO_PIN_10,
+		LL_GPIO_PIN_11,
+		LL_GPIO_PIN_12,
+		LL_GPIO_PIN_13,
+		LL_GPIO_PIN_14,
+		LL_GPIO_PIN_15,
 	},
 	{
-		GPIO_PIN_9,
-		GPIO_PIN_8,
-		GPIO_PIN_7,
-		GPIO_PIN_6,
-		GPIO_PIN_5,
-		GPIO_PIN_4,
+		LL_GPIO_PIN_9,
+		LL_GPIO_PIN_8,
+		LL_GPIO_PIN_7,
+		LL_GPIO_PIN_6,
+		LL_GPIO_PIN_5,
+		LL_GPIO_PIN_4,
 	}
 };
 
@@ -185,9 +185,9 @@ static uint8_t get_row(const uint16_t r) {
 	uint8_t ret;
 
 	// wait until evenything is drained
-	while (GPIOA->IDR & 0xFF);
+	while (LL_GPIO_ReadInputPort(GPIOA) & 0xFF);
 	// select the row to scan
-	HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_SET);
+	LL_GPIO_SetOutputPin(GPIOB, r);
 
 	// add some delay to not miss any input
 	for (int i = 0; i < 8; i++) {
@@ -195,10 +195,10 @@ static uint8_t get_row(const uint16_t r) {
 	}
 
 	// read out all the pressed buttons in the selected row
-	ret = (uint8_t) (GPIOA->IDR & 0xFF);
+	ret = (uint8_t) (LL_GPIO_ReadInputPort(GPIOA) & 0xFF);
 
 	// deselct the row
-	HAL_GPIO_WritePin(GPIOB, r, GPIO_PIN_RESET);
+	LL_GPIO_ResetOutputPin(GPIOB, r);
 
 	return ret;
 }
