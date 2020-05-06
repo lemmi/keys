@@ -1,5 +1,6 @@
-#include "layouts.h"
 #include "main.h"
+#include "app.h"
+#include "layouts.h"
 #include "flash.h"
 
 Layout_t LAYOUT_SELECT = {

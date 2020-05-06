@@ -6,9 +6,13 @@
 #include "app.h"
 #include "layouts.h"
 
+#define HISTORY_SIZE 3
+
 __IO uint16_t USB_EVENT;
 __IO int complete;
+
 extern UART_HandleTypeDef huart1;
+extern USBD_HandleTypeDef hUsbDeviceFS;
 
 static void GPIO_AS_INPUT();
 static void GPIO_AS_INT();
