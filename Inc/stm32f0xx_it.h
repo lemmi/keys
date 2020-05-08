@@ -51,6 +51,7 @@ void NMI_Handler(void);
 void HardFault_Handler(void);
 void SysTick_Handler(void);
 void DMA1_Channel4_5_6_7_IRQHandler(void);
+void TIM14_IRQHandler(void);
 void USART1_IRQHandler(void);
 void USB_IRQHandler(void);
 /* USER CODE BEGIN EFP */

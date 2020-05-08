@@ -13,17 +13,18 @@ __IO int complete;
 
 extern UART_HandleTypeDef huart1;
 extern USBD_HandleTypeDef hUsbDeviceFS;
+extern TIM_HandleTypeDef htim14;
 
 static void GPIO_AS_INPUT();
 static void GPIO_AS_INT();
 
 typedef enum {
-	RUNNING,
-	SUSPEND_ENTER,
+	NONE,
 	SUSPEND,
-	SUSPEND_EXIT,
 	REMOTE_WAKE,
-} State_t;
+} Reason_t;
+
+__IO Reason_t REASON;
 
 typedef const uint16_t Hand_t[ROWS];
 
@@ -34,6 +35,8 @@ typedef struct {
 	Layout_t *layout;
 	Hand_t *hand;
 } Keys_t;
+
+Keys_t k;
 
 static void k_clear(Keys_t *k) {
 	memset(k, 0, sizeof(k->report) + sizeof(k->history) + sizeof(k->hist_idx));
@@ -86,74 +89,69 @@ void HAL_ResumeTick() {
 void app() {
 	GPIO_AS_INPUT();
 
-	Keys_t k;
 	k_clear(&k);
 	lyt_select_layout(&k.layout, &k.hand);
 
 	// we have no need for systick. disable source and mask interrupt
 	HAL_SuspendTick();
 
-	State_t state = RUNNING;
-
 	complete = 1;
-	HAL_HalfDuplex_EnableTransmitter(&huart1);
 	while(1) {
-		USB_EVENT = 0;
-
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
-
-loop_no_sleep:
-		switch (state) {
-			case RUNNING:
-				if (USB_EVENT & USB_ISTR_SUSP) {
-					state = SUSPEND_ENTER;
-					goto loop_no_sleep;
-				}
-
-				if (!(USB_EVENT & USB_ISTR_SOF)) {
-					break;
-				}
-
-				k_scan(&k);
-				k_report(&k);
-				if (complete) {
-					complete = 0;
-					HAL_UART_Transmit_DMA(&huart1, (uint8_t *) k.report, sizeof(k.report));
-				}
-
-				break;
-			case SUSPEND_ENTER:
-				k_clear(&k);
-				GPIO_AS_INT();
-				LL_GPIO_SetOutputPin(GPIOB, k_all_rows(&k));
-				state = SUSPEND;
-				break;
-			case SUSPEND:
-				if (USB_EVENT & USB_ISTR_WKUP) {
-					state = SUSPEND_EXIT;
-					goto loop_no_sleep;
-				}
-				if ((GPIOA->IDR & 0xFF) != 0) {
-					state = REMOTE_WAKE;
-					goto loop_no_sleep;
-				}
-				break;
-			case REMOTE_WAKE:
-				// we need the systick to measure 15ms for the wakeup
-				HAL_ResumeTick();
-				HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
-				HAL_Delay(10);
-				HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
-				state=SUSPEND_EXIT;
-				HAL_SuspendTick();
-				goto loop_no_sleep;
-			case SUSPEND_EXIT:
-				LL_GPIO_ResetOutputPin(GPIOB, k_all_rows(&k));
-				GPIO_AS_INPUT();
-				state = RUNNING;
-				break;
-		}
 	}
+}
+
+static void SOFCallback() {
+	k_scan(&k);
+	k_report(&k);
+	if (complete) {
+		complete = 0;
+		HAL_UART_Transmit_DMA(&huart1, (uint8_t *) k.report, sizeof(k.report));
+	}
+}
+static void SuspendCallback() {
+	k_clear(&k);
+	REASON = SUSPEND;
+	htim14.Instance->ARR=1000;
+	HAL_TIM_Base_Start_IT(&htim14);
+}
+static void ResumeCallback() {
+	LL_GPIO_ResetOutputPin(GPIOB, k_all_rows(&k));
+	GPIO_AS_INPUT();
+}
+void USB_Callback() {
+	USB_EVENT |= USB->ISTR;
+
+	if(USB->ISTR & USB_ISTR_SOF){
+		SOFCallback();
+	}
+	if(USB->ISTR & USB_ISTR_SUSP){
+		SuspendCallback();
+	}
+	if(USB->ISTR & USB_ISTR_SOF){
+		ResumeCallback();
+	}
+}
+static void Remote_Wake() {
+	if ((GPIOA->IDR & 0xFF) == 0) {
+		// there is no button pressed that we are interested in
+		return;
+	}
+	HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
+	REASON = REMOTE_WAKE;
+	htim14.Instance->ARR=10;
+	HAL_TIM_Base_Start_IT(&htim14);
+}
+void Timer_Callback() {
+	HAL_TIM_Base_Stop_IT(&htim14);
+	if (REASON == SUSPEND) {
+		GPIO_AS_INT();
+		LL_GPIO_SetOutputPin(GPIOB, k_all_rows(&k));
+	}
+	if (REASON == REMOTE_WAKE) {
+		HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
+	}
+	REASON = NONE;
 }
 
 static void GPIO_AS_INT() {
@@ -217,37 +215,40 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 
 void EXTI0_1_IRQHandler(void)
 {
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_0) != RESET) {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_0);
-  }
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_1) != RESET) {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_1);
-  }
+	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_0) != RESET) {
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_0);
+	}
+	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_1) != RESET) {
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_1);
+	}
+	Remote_Wake();
 }
 
 void EXTI2_3_IRQHandler(void)
 {
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_2) != RESET) {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
-  }
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_3) != RESET) {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_3);
-  }
+	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_2) != RESET) {
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
+	}
+	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_3) != RESET) {
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_3);
+	}
+	Remote_Wake();
 }
 
 void EXTI4_15_IRQHandler(void)
 {
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET) {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
-  }
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_5) != RESET) {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_5);
-  }
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_6) != RESET) {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_6);
-  }
-  if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_7) != RESET) {
-    LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_7);
-  }
+	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET) {
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
+	}
+	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_5) != RESET) {
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_5);
+	}
+	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_6) != RESET) {
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_6);
+	}
+	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_7) != RESET) {
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_7);
+	}
+	Remote_Wake();
 }
 
