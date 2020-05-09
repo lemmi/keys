@@ -43,7 +43,8 @@ static void k_clear(Keys_t *k) {
 }
 
 static uint16_t k_all_rows(const Keys_t *k) {
-	return (*k->hand)[0] | (*k->hand)[1] | (*k->hand)[2] | (*k->hand)[3] | (*k->hand)[4] | (*k->hand)[5];
+	return (*k->hand)[0] | (*k->hand)[1] | (*k->hand)[2] | (*k->hand)[3] |
+		(*k->hand)[4] | (*k->hand)[5];
 }
 
 static void k_scan(Keys_t *k) {
@@ -96,7 +97,7 @@ void app() {
 	HAL_SuspendTick();
 
 	complete = 1;
-	while(1) {
+	while (1) {
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	}
 }
@@ -106,13 +107,13 @@ static void SOFCallback() {
 	k_report(&k);
 	if (complete) {
 		complete = 0;
-		HAL_UART_Transmit_DMA(&huart1, (uint8_t *) k.report, sizeof(k.report));
+		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)k.report, sizeof(k.report));
 	}
 }
 static void SuspendCallback() {
 	k_clear(&k);
+	htim14.Instance->ARR = 100;
 	REASON = SUSPEND;
-	htim14.Instance->ARR=1000;
 	HAL_TIM_Base_Start_IT(&htim14);
 }
 static void ResumeCallback() {
@@ -122,13 +123,13 @@ static void ResumeCallback() {
 void USB_Callback() {
 	USB_EVENT |= USB->ISTR;
 
-	if(USB->ISTR & USB_ISTR_SOF){
+	if (USB->ISTR & USB_ISTR_SOF) {
 		SOFCallback();
 	}
-	if(USB->ISTR & USB_ISTR_SUSP){
+	if (USB->ISTR & USB_ISTR_SUSP) {
 		SuspendCallback();
 	}
-	if(USB->ISTR & USB_ISTR_SOF){
+	if (USB->ISTR & USB_ISTR_SOF) {
 		ResumeCallback();
 	}
 }
@@ -138,11 +139,12 @@ static void Remote_Wake() {
 		return;
 	}
 	HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
+	htim14.Instance->ARR = 10;
 	REASON = REMOTE_WAKE;
-	htim14.Instance->ARR=10;
 	HAL_TIM_Base_Start_IT(&htim14);
 }
-void Timer_Callback() {
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	HAL_TIM_Base_Stop_IT(&htim14);
 	if (REASON == SUSPEND) {
 		GPIO_AS_INT();
@@ -166,15 +168,9 @@ static void GPIO_AS_INT() {
 	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE6);
 	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE7);
 
-	EXTI_InitStruct.Line_0_31 =
-		LL_EXTI_LINE_0 |
-		LL_EXTI_LINE_1 |
-		LL_EXTI_LINE_2 |
-		LL_EXTI_LINE_3 |
-		LL_EXTI_LINE_4 |
-		LL_EXTI_LINE_5 |
-		LL_EXTI_LINE_6 |
-		LL_EXTI_LINE_7;
+	EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_0 | LL_EXTI_LINE_1 | LL_EXTI_LINE_2 |
+		LL_EXTI_LINE_3 | LL_EXTI_LINE_4 | LL_EXTI_LINE_5 |
+		LL_EXTI_LINE_6 | LL_EXTI_LINE_7;
 	EXTI_InitStruct.LineCommand = ENABLE;
 	EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
 	EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
@@ -187,18 +183,13 @@ static void GPIO_AS_INT() {
 	NVIC_SetPriority(EXTI4_15_IRQn, 0);
 	NVIC_EnableIRQ(EXTI4_15_IRQn);
 }
+
 static void GPIO_AS_INPUT() {
 	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 
-	EXTI_InitStruct.Line_0_31 =
-		LL_EXTI_LINE_0 |
-		LL_EXTI_LINE_1 |
-		LL_EXTI_LINE_2 |
-		LL_EXTI_LINE_3 |
-		LL_EXTI_LINE_4 |
-		LL_EXTI_LINE_5 |
-		LL_EXTI_LINE_6 |
-		LL_EXTI_LINE_7;
+	EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_0 | LL_EXTI_LINE_1 | LL_EXTI_LINE_2 |
+		LL_EXTI_LINE_3 | LL_EXTI_LINE_4 | LL_EXTI_LINE_5 |
+		LL_EXTI_LINE_6 | LL_EXTI_LINE_7;
 	EXTI_InitStruct.LineCommand = DISABLE;
 	EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
 	EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_NONE;
@@ -209,12 +200,11 @@ static void GPIO_AS_INPUT() {
 	NVIC_DisableIRQ(EXTI4_15_IRQn);
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) { 
 	complete = 1;
 }
 
-void EXTI0_1_IRQHandler(void)
-{
+void EXTI0_1_IRQHandler(void) {
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_0) != RESET) {
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_0);
 	}
@@ -224,8 +214,7 @@ void EXTI0_1_IRQHandler(void)
 	Remote_Wake();
 }
 
-void EXTI2_3_IRQHandler(void)
-{
+void EXTI2_3_IRQHandler(void) {
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_2) != RESET) {
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_2);
 	}
@@ -235,8 +224,7 @@ void EXTI2_3_IRQHandler(void)
 	Remote_Wake();
 }
 
-void EXTI4_15_IRQHandler(void)
-{
+void EXTI4_15_IRQHandler(void) {
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET) {
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
 	}
@@ -251,4 +239,3 @@ void EXTI4_15_IRQHandler(void)
 	}
 	Remote_Wake();
 }
-
