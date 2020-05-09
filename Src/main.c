@@ -127,14 +127,6 @@ void SystemClock_Config(void)
   {
   Error_Handler();  
   }
-  LL_RCC_HSI_Enable();
-
-   /* Wait till HSI is ready */
-  while(LL_RCC_HSI_IsReady() != 1)
-  {
-    
-  }
-  LL_RCC_HSI_SetCalibTrimming(16);
   LL_RCC_HSI48_Enable();
 
    /* Wait till HSI48 is ready */
@@ -142,7 +134,7 @@ void SystemClock_Config(void)
   {
     
   }
-  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI, LL_RCC_PLL_MUL_2, LL_RCC_PREDIV_DIV_1);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSI48, LL_RCC_PLL_MUL_2, LL_RCC_PREDIV_DIV_6);
   LL_RCC_PLL_Enable();
 
    /* Wait till PLL is ready */
@@ -191,7 +183,7 @@ static void MX_TIM14_Init(void)
 
   /* USER CODE END TIM14_Init 1 */
   htim14.Instance = TIM14;
-  htim14.Init.Prescaler = 16000;
+  htim14.Init.Prescaler = 1600;
   htim14.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim14.Init.Period = 10;
   htim14.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;

@@ -8,7 +8,6 @@
 
 #define HISTORY_SIZE 3
 
-__IO uint16_t USB_EVENT;
 __IO int complete;
 
 extern UART_HandleTypeDef huart1;
@@ -17,11 +16,13 @@ extern TIM_HandleTypeDef htim14;
 
 static void GPIO_AS_INPUT();
 static void GPIO_AS_INT();
+static uint8_t SOFCallback(USBD_HandleTypeDef *pdev);
 
 typedef enum {
 	NONE,
 	SUSPEND,
 	REMOTE_WAKE,
+	SCAN,
 } Reason_t;
 
 __IO Reason_t REASON;
@@ -96,23 +97,23 @@ void app() {
 	// we have no need for systick. disable source and mask interrupt
 	HAL_SuspendTick();
 
+	hUsbDeviceFS.pClass->SOF=SOFCallback;
+
 	complete = 1;
 	while (1) {
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	}
 }
 
-static void SOFCallback() {
-	k_scan(&k);
-	k_report(&k);
-	if (complete) {
-		complete = 0;
-		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)k.report, sizeof(k.report));
-	}
+static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
+	htim14.Instance->ARR = 4; // wait 500us to scan
+	REASON = SCAN;
+	HAL_TIM_Base_Start_IT(&htim14);
+	return 0;
 }
 static void SuspendCallback() {
 	k_clear(&k);
-	htim14.Instance->ARR = 100;
+	htim14.Instance->ARR = 999; // wait 100ms
 	REASON = SUSPEND;
 	HAL_TIM_Base_Start_IT(&htim14);
 }
@@ -121,17 +122,25 @@ static void ResumeCallback() {
 	GPIO_AS_INPUT();
 }
 void USB_Callback() {
-	USB_EVENT |= USB->ISTR;
+	/*
+	uint16_t dbg_rows = 0;
 
-	if (USB->ISTR & USB_ISTR_SOF) {
-		SOFCallback();
-	}
+	dbg_rows |= (USB->ISTR & USB_ISTR_ESOF) ? (*k.hand)[0] : (uint16_t) 0;
+	dbg_rows |= (USB->ISTR & USB_ISTR_SOF)  ? (*k.hand)[1] : (uint16_t) 0;
+	dbg_rows |= (USB->ISTR & USB_ISTR_CTR)  ? (*k.hand)[2] : (uint16_t) 0;
+	dbg_rows |= (USB->ISTR & USB_ISTR_SUSP) ? (*k.hand)[3] : (uint16_t) 0;
+	dbg_rows |= (USB->ISTR & USB_ISTR_WKUP) ? (*k.hand)[4] : (uint16_t) 0;
+	dbg_rows |= (USB->ISTR & USB_ISTR_ERR)  ? (*k.hand)[5] : (uint16_t) 0;
+	LL_GPIO_SetOutputPin(GPIOB, dbg_rows);
+	*/
+
 	if (USB->ISTR & USB_ISTR_SUSP) {
 		SuspendCallback();
 	}
-	if (USB->ISTR & USB_ISTR_SOF) {
+	if (USB->ISTR & USB_ISTR_WKUP) {
 		ResumeCallback();
 	}
+	//LL_GPIO_ResetOutputPin(GPIOB, k_all_rows(&k));
 }
 static void Remote_Wake() {
 	if ((GPIOA->IDR & 0xFF) == 0) {
@@ -139,7 +148,7 @@ static void Remote_Wake() {
 		return;
 	}
 	HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
-	htim14.Instance->ARR = 10;
+	htim14.Instance->ARR = 99; // 10ms
 	REASON = REMOTE_WAKE;
 	HAL_TIM_Base_Start_IT(&htim14);
 }
@@ -152,6 +161,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	}
 	if (REASON == REMOTE_WAKE) {
 		HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
+	}
+	if (REASON == SCAN) {
+		k_scan(&k);
+		k_report(&k);
+		/*
+		if (complete) {
+			complete = 0;
+			HAL_UART_Transmit_DMA(&huart1, (uint8_t *)k.report, sizeof(k.report));
+		}
+		*/
 	}
 	REASON = NONE;
 }
