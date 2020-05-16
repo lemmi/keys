@@ -18,11 +18,11 @@ Layout_t LAYOUT_LEFT = {
 	{ 0           , 0        , UKEY_TAB          , UKEY_Q                , UKEY_W        , UKEY_E        , UKEY_R     , UKEY_T     },
 	{ 0           , 0        , UKEY_INSERT       , UKEY_A                , UKEY_S        , UKEY_D        , UKEY_F     , UKEY_G     },
 	{ 0           , 0        , UKEY_LEFT_SHIFT   , UKEY_BACKSLASH_NON_US , UKEY_Z        , UKEY_X        , UKEY_C     , UKEY_V     },
-	{ 0           , 0        , UKEY_LEFT_CONTROL , UKEY_RIGHT_ALT        , UKEY_LEFT_GUI , UKEY_LEFT_ALT , UKEY_SPACE , UKEY_ENTER },
+	{ 0           , 0        , UKEY_LEFT_CONTROL , UKEY_PRINT        , UKEY_LEFT_GUI , UKEY_LEFT_ALT , UKEY_SPACE , UKEY_ENTER },
 };
 
 Layout_t LAYOUT_RIGHT = {
-	{ UKEY_F07   , UKEY_F08   , UKEY_B      , UKEY_F09           , UKEY_F10       , UKEY_F11         , UKEY_F12       , UKEY_SCROLL   },
+	{ UKEY_F07   , UKEY_F08   , UKEY_B      , UKEY_F09           , UKEY_F10       , UKEY_F11         , UKEY_F12       , UKEY_PAD_NUM   },
 	{ UKEY_6     , UKEY_7     , UKEY_8      , UKEY_9             , UKEY_0         , UKEY_MINUS       , UKEY_EQUAL     , UKEY_HOME     },
 	{ UKEY_Y     , UKEY_U     , UKEY_I      , UKEY_O             , UKEY_P         , UKEY_LBRACKET    , UKEY_RBRACKET  , UKEY_END      },
 	{ UKEY_H     , UKEY_J     , UKEY_K      , UKEY_L             , UKEY_SEMICOLON , UKEY_APOSTROPHE  , UKEY_BACKSLASH , UKEY_PAGEUP   },
@@ -37,6 +37,15 @@ Layout_t LAYOUT_LEFT_ADNW = {
 	{ 0           , 0                 , 0                     , UKEY_A        , UKEY_S     , UKEY_D        , UKEY_F   , UKEY_G     },
 	{ 0           , UKEY_LEFT_SHIFT   , UKEY_BACKSLASH_NON_US , UKEY_Z        , UKEY_X     , UKEY_C        , UKEY_V   , UKEY_B     },
 	{ 0           , UKEY_LEFT_CONTROL , UKEY_LEFT_GUI         , UKEY_LEFT_ALT , UKEY_ENTER , UKEY_LEFT_GUI , UKEY_TAB , UKEY_SPACE },
+};
+
+Layout_t LAYOUT_RIGHT_NUM = {
+	{ UKEY_F07     , UKEY_F08     , UKEY_DELETE        , UKEY_F09           , UKEY_F10       , UKEY_F11         , UKEY_F12       , UKEY_PAD_NUM   },
+	{ UKEY_PAD_NUM , UKEY_PAD_DIV , UKEY_PAD_MUL       , UKEY_PAD_SUB       , UKEY_0         , UKEY_MINUS       , UKEY_EQUAL     , UKEY_HOME     },
+	{ UKEY_PAD_7   , UKEY_PAD_8   , UKEY_PAD_9         , UKEY_PAD_ADD       , UKEY_P         , UKEY_LBRACKET    , UKEY_RBRACKET  , UKEY_END      },
+	{ UKEY_PAD_4   , UKEY_PAD_5   , UKEY_PAD_6         , UKEY_PAD_ADD       , UKEY_SEMICOLON , UKEY_APOSTROPHE  , UKEY_BACKSLASH , UKEY_PAGEUP   },
+	{ UKEY_PAD_1   , UKEY_PAD_2   , UKEY_PAD_3         , UKEY_PAD_ENTER     , UKEY_SLASH     , UKEY_RIGHT_SHIFT , UKEY_UP        , UKEY_PAGEDOWN },
+	{ UKEY_ENTER   , UKEY_PAD_0   , UKEY_PAD_SEPARATOR , UKEY_DELETEFORWARD , UKEY_RIGHT_ALT , UKEY_LEFT        , UKEY_DOWN      , UKEY_RIGHT    },
 };
 
 Layout_t *Layouts[] = {
@@ -212,4 +221,8 @@ void get_rows(uint8_t dst[ROWS], const uint16_t hand[ROWS]) {
 	dst[3] = get_row(hand[3]);
 	dst[4] = get_row(hand[4]);
 	dst[5] = get_row(hand[5]);
+}
+
+void lyt_get_num_layout(Layout_t **lyt) {
+	*lyt=&LAYOUT_RIGHT_NUM;
 }

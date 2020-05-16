@@ -22,7 +22,7 @@ TARGET = test
 # debug build?
 DEBUG = 1
 # optimization
-OPT = -Og
+OPT = -O2 -ftree-loop-vectorize -fvect-cost-model=dynamic
 
 
 #######################################

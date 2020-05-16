@@ -72,7 +72,14 @@ static void k_report(Keys_t *k) {
 
 	k_merge_history(k, merged);
 
+	if (((USBD_CUSTOM_HID_HandleTypeDef *)hUsbDeviceFS.pClassData)->Report_buf[0] & 1) {
+		Layout_t *l;
+		lyt_get_num_layout(&l);
+		pressed = lyt_get_pressed(l, buttons, &k->report[0], merged);
+
+	} else {
 	pressed = lyt_get_pressed(k->layout, buttons, &k->report[0], merged);
+	}
 	if (pressed > 6) {
 		pressed = 6;
 	}
