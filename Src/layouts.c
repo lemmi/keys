@@ -92,7 +92,7 @@ static uint8_t lyt_modmask(const uint8_t k) {
 }
 
 static uint8_t lyt_is_modkey(const uint8_t k) {
-	return lyt_modmask(k) > 0;
+	return k >= UKEY_LEFT_SHIFT && k <= UKEY_RIGHT_GUI;
 }
 
 uint8_t lyt_get_pressed(const Layout_t *layout, uint8_t dst[NSWITCH], uint8_t *moddst, const uint8_t rows[ROWS]) {
