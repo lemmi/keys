@@ -35,17 +35,21 @@ typedef struct {
 	uint8_t hist_idx;
 	const Layout_t *layout;
 	Hand_t *hand;
+	uint16_t all_rows;
 } Keys_t;
 
-Keys_t k;
+Keys_t k = {0};
 
 static void k_clear(Keys_t *k) {
 	memset(k, 0, sizeof(k->report) + sizeof(k->history) + sizeof(k->hist_idx));
 }
 
-static uint16_t k_all_rows(const Keys_t *k) {
-	return (*k->hand)[0] | (*k->hand)[1] | (*k->hand)[2] | (*k->hand)[3] |
-		(*k->hand)[4] | (*k->hand)[5];
+static uint16_t k_all_rows(Keys_t *k) {
+	if (k->all_rows == 0) {
+		k->all_rows = (*k->hand)[0] | (*k->hand)[1] | (*k->hand)[2] | (*k->hand)[3] |
+			(*k->hand)[4] | (*k->hand)[5];
+	}
+	return k->all_rows;
 }
 
 static void k_scan(Keys_t *k) {
