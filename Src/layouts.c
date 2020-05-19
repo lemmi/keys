@@ -2,6 +2,7 @@
 #include "app.h"
 #include "layouts.h"
 #include "flash.h"
+#include "bits.h"
 
 const Layout_t LAYOUT_SELECT = {
 	{ 0, 0, 0, 0, 0, 0, 0, 0},
@@ -128,7 +129,35 @@ uint8_t lyt_get_pressed(const Layout_t *layout, uint8_t dst[NSWITCH], uint8_t *m
 	return n;
 }
 
-static uint8_t lyt_count_pressed(Layout_t *layout, const uint8_t rows[ROWS]) {
+uint8_t lyt_report_bits(const Layout_t *layout, Bits_t bs, const uint8_t rows[ROWS]) {
+	uint8_t n = 0;
+
+	for (uint8_t r = 0; r < ROWS; r++) {
+		if (rows[r] == 0) {
+			continue;
+		}
+
+		for (uint8_t c = 0; c < COLS; c++) {
+			uint8_t key;
+
+			if (!(rows[r] & (1 << c))) {
+				continue;
+			}
+
+			key = (*layout)[r][c];
+			if (!key) {
+				continue;
+			}
+
+			bits_set(bs, key);
+			n++;
+		}
+	}
+
+	return n;
+}
+
+static uint8_t lyt_count_pressed(const Layout_t *layout, const uint8_t rows[ROWS]) {
 	return lyt_get_pressed(layout, NULL, NULL, rows);
 }
 

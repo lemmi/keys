@@ -5,6 +5,7 @@
 
 #include "app.h"
 #include "layouts.h"
+#include "bits.h"
 
 #define HISTORY_SIZE 3
 
@@ -30,8 +31,8 @@ __IO Reason_t REASON;
 typedef const uint16_t Hand_t[ROWS];
 
 typedef struct {
-	uint8_t report[8];
 	uint8_t history[HISTORY_SIZE][ROWS];
+	uint8_t history_last[ROWS];
 	uint8_t hist_idx;
 	const Layout_t *layout;
 	Hand_t *hand;
@@ -41,7 +42,7 @@ typedef struct {
 Keys_t k = {0};
 
 static void k_clear(Keys_t *k) {
-	memset(k, 0, sizeof(k->report) + sizeof(k->history) + sizeof(k->hist_idx));
+	memset(k, 0, sizeof(k->history) + sizeof(k->hist_idx));
 }
 
 static uint16_t k_all_rows(Keys_t *k) {
@@ -57,7 +58,7 @@ static void k_scan(Keys_t *k) {
 	get_rows(k->history[k->hist_idx], *k->hand);
 }
 
-static void k_merge_history(const Keys_t *k, uint8_t merged[ROWS]) {
+static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
 	size_t i, r;
 	for (i = 0; i < HISTORY_SIZE; i++) {
 		for (r = 0; r < ROWS; r++) {
@@ -68,20 +69,43 @@ static void k_merge_history(const Keys_t *k, uint8_t merged[ROWS]) {
 
 static void k_report(Keys_t *k) {
 	uint8_t merged[ROWS] = {0};
-	uint8_t buttons[NSWITCH] = {0};
-	uint8_t pressed = 0;
-
-	k->report[0] = 0;
-	memset(&k->report[2], 0, 6);
+	int cmp;
 
 	k_merge_history(k, merged);
 
-	pressed = lyt_get_pressed(k->layout, buttons, &k->report[0], merged);
-	if (pressed > 6) {
-		pressed = 6;
+	cmp = memcmp(k->history_last, merged, ROWS);
+	memcpy(k->history_last, merged, ROWS);
+	if (cmp == 0) {
+		return;
 	}
-	memcpy(&k->report[2], buttons, pressed);
-	USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, k->report, sizeof(k->report));
+
+	if(((USBD_CUSTOM_HID_HandleTypeDef *)hUsbDeviceFS.pClassData)->Protocol == 0) {
+		// handle boot protocol
+		uint8_t buttons[NSWITCH] = {0};
+		uint8_t report[8] = {0};
+		uint8_t pressed = 0;
+
+		pressed = lyt_get_pressed(k->layout, buttons, report, merged);
+
+		if (pressed > 6) {
+			pressed = 6;
+			memset(&report[2], UKEY_ERROR_ROLL_OVER, pressed);
+		} else {
+			memcpy(&report[2], buttons, pressed);
+		}
+
+		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, report, sizeof(report));
+	} else {
+		// handle report protocol
+		Bits_t report_bits = {0};
+
+		lyt_report_bits(k->layout, report_bits, merged);
+		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, (uint8_t *) report_bits, 29);
+		//	if (complete) {
+		//		complete = 0;
+		//		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)report_bits, 29);
+		//	}
+	}
 }
 
 void HAL_SuspendTick() {

@@ -7,7 +7,11 @@
 #define COLS 8
 #define NSWITCH (ROWS * COLS)
 
+
 // https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
+
+#define UKEY_ERROR_ROLL_OVER 1
+
 #define UKEY_A 4
 #define UKEY_B 5
 #define UKEY_C 6
@@ -149,5 +153,8 @@ void get_rows(uint8_t[ROWS], const uint16_t[ROWS]);
 //uint8_t lyt_is_modkey(const uint8_t);
 uint8_t lyt_get_pressed(const Layout_t *, uint8_t[NSWITCH], uint8_t *, const uint8_t[ROWS]);
 void lyt_select_layout(const Layout_t **, const uint16_t (**)[ROWS]);
+
+#include "bits.h"
+uint8_t lyt_report_bits(const Layout_t *layout, Bits_t bs, const uint8_t rows[ROWS]);
 
 #endif
