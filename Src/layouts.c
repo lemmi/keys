@@ -220,13 +220,9 @@ static uint8_t get_row(const uint16_t r) {
 
 	// wait until evenything is drained
 	while (LL_GPIO_ReadInputPort(GPIOA) & 0xFF);
+
 	// select the row to scan
 	LL_GPIO_SetOutputPin(GPIOB, r);
-
-	// add some delay to not miss any input
-	for (int i = 0; i < 8; i++) {
-		__NOP();
-	}
 
 	// read out all the pressed buttons in the selected row
 	ret = (uint8_t) (LL_GPIO_ReadInputPort(GPIOA) & 0xFF);
