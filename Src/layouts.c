@@ -3,7 +3,7 @@
 #include "layouts.h"
 #include "flash.h"
 
-Layout_t LAYOUT_SELECT = {
+const Layout_t LAYOUT_SELECT = {
 	{ 0, 0, 0, 0, 0, 0, 0, 0},
 	{ 1, 2, 3, 4, 5, 6, 7, 8},
 	{ 9,10,11,12,13,14,15,16},
@@ -12,7 +12,7 @@ Layout_t LAYOUT_SELECT = {
 	{33,34,35,36,37,38,39,40},
 };
 
-Layout_t LAYOUT_LEFT = {
+const Layout_t LAYOUT_LEFT = {
 	{ UKEY_ESCAPE , UKEY_F01 , UKEY_F02          , UKEY_F03              , UKEY_F04      , UKEY_B        , UKEY_F05   , UKEY_F06   },
 	{ 0           , 0        , UKEY_GRAVE        , UKEY_1                , UKEY_2        , UKEY_3        , UKEY_4     , UKEY_5     },
 	{ 0           , 0        , UKEY_TAB          , UKEY_Q                , UKEY_W        , UKEY_E        , UKEY_R     , UKEY_T     },
@@ -21,7 +21,7 @@ Layout_t LAYOUT_LEFT = {
 	{ 0           , 0        , UKEY_LEFT_CONTROL , UKEY_RIGHT_ALT        , UKEY_LEFT_GUI , UKEY_LEFT_ALT , UKEY_SPACE , UKEY_ENTER },
 };
 
-Layout_t LAYOUT_RIGHT = {
+const Layout_t LAYOUT_RIGHT = {
 	{ UKEY_F07   , UKEY_F08   , UKEY_B      , UKEY_F09           , UKEY_F10       , UKEY_F11         , UKEY_F12       , UKEY_SCROLL   },
 	{ UKEY_6     , UKEY_7     , UKEY_8      , UKEY_9             , UKEY_0         , UKEY_MINUS       , UKEY_EQUAL     , UKEY_HOME     },
 	{ UKEY_Y     , UKEY_U     , UKEY_I      , UKEY_O             , UKEY_P         , UKEY_LBRACKET    , UKEY_RBRACKET  , UKEY_END      },
@@ -30,7 +30,7 @@ Layout_t LAYOUT_RIGHT = {
 	{ UKEY_ENTER , UKEY_SPACE , UKEY_DELETE , UKEY_DELETEFORWARD , UKEY_RIGHT_ALT , UKEY_LEFT        , UKEY_DOWN      , UKEY_RIGHT    },
 };
 
-Layout_t LAYOUT_LEFT_ADNW = {
+const Layout_t LAYOUT_LEFT_ADNW = {
 	{ UKEY_ESCAPE , UKEY_F01          , UKEY_F02              , UKEY_F03      , UKEY_F04   , 0             , UKEY_F05 , UKEY_F06   },
 	{ 0           , 0                 , UKEY_GRAVE            , UKEY_1        , UKEY_2     , UKEY_3        , UKEY_4   , UKEY_5     },
 	{ 0           , 0                 , UKEY_TAB              , UKEY_Q        , UKEY_W     , UKEY_E        , UKEY_R   , UKEY_T     },
@@ -39,7 +39,7 @@ Layout_t LAYOUT_LEFT_ADNW = {
 	{ 0           , UKEY_LEFT_CONTROL , UKEY_LEFT_GUI         , UKEY_LEFT_ALT , UKEY_ENTER , UKEY_LEFT_GUI , UKEY_TAB , UKEY_SPACE },
 };
 
-Layout_t *Layouts[] = {
+const Layout_t *Layouts[] = {
 	(&LAYOUT_SELECT),
 	(&LAYOUT_LEFT),
 	(&LAYOUT_RIGHT),
@@ -94,7 +94,7 @@ static uint8_t lyt_is_modkey(const uint8_t k) {
 	return lyt_modmask(k) > 0;
 }
 
-uint8_t lyt_get_pressed(Layout_t *layout, uint8_t dst[NSWITCH], uint8_t *moddst, const uint8_t rows[ROWS]) {
+uint8_t lyt_get_pressed(const Layout_t *layout, uint8_t dst[NSWITCH], uint8_t *moddst, const uint8_t rows[ROWS]) {
 	uint8_t n = 0;
 
 	for (uint8_t r = 0; r < ROWS; r++) {
@@ -132,7 +132,7 @@ static uint8_t lyt_count_pressed(Layout_t *layout, const uint8_t rows[ROWS]) {
 	return lyt_get_pressed(layout, NULL, NULL, rows);
 }
 
-void lyt_select_layout(Layout_t **lyt, const uint16_t (**hand)[ROWS]) {
+void lyt_select_layout(const Layout_t **lyt, const uint16_t (**hand)[ROWS]) {
 	uint8_t rows[ROWS];
 	uint8_t buttons[NSWITCH];
 	uint8_t hand_idx = 1;

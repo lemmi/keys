@@ -33,7 +33,7 @@ typedef struct {
 	uint8_t report[8];
 	uint8_t history[HISTORY_SIZE][ROWS];
 	uint8_t hist_idx;
-	Layout_t *layout;
+	const Layout_t *layout;
 	Hand_t *hand;
 } Keys_t;
 

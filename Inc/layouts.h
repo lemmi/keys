@@ -147,7 +147,7 @@ void get_rows(uint8_t[ROWS], const uint16_t[ROWS]);
 
 //uint8_t lyt_modmask(const uint8_t);
 //uint8_t lyt_is_modkey(const uint8_t);
-uint8_t lyt_get_pressed(Layout_t *, uint8_t[NSWITCH], uint8_t *, const uint8_t[ROWS]);
-void lyt_select_layout(Layout_t **, const uint16_t (**)[ROWS]);
+uint8_t lyt_get_pressed(const Layout_t *, uint8_t[NSWITCH], uint8_t *, const uint8_t[ROWS]);
+void lyt_select_layout(const Layout_t **, const uint16_t (**)[ROWS]);
 
 #endif
