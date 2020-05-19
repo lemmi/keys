@@ -40,6 +40,7 @@ Src/main.c \
 Src/app.c \
 Src/flash.c \
 Src/layouts.c \
+Src/bits.c \
 Src/usb_device.c \
 Src/usbd_conf.c \
 Src/usbd_desc.c \
