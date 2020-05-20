@@ -2,6 +2,7 @@
 #define LAYOUTS_H
 
 #include <stdint.h>
+#include "bits.h"
 
 #define ROWS (6*2)
 #define COLS 8
@@ -146,15 +147,9 @@
 extern const uint16_t lyt_all_rows;
 typedef uint8_t Layout_t[ROWS][COLS];
 
-//uint8_t get_row(uint16_t);
 void get_rows(uint8_t[ROWS]);
-
-//uint8_t lyt_modmask(const uint8_t);
-//uint8_t lyt_is_modkey(const uint8_t);
-uint8_t lyt_get_pressed(const Layout_t *, uint8_t[NSWITCH], uint8_t *, const uint8_t[ROWS]);
 void lyt_select_layout(const Layout_t **);
 
-#include "bits.h"
+uint8_t lyt_report_boot(const Layout_t *layout, uint8_t report[8], const uint8_t rows[ROWS]);
 uint8_t lyt_report_bits(const Layout_t *layout, Bits_t bs, const uint8_t rows[ROWS]);
-
 #endif

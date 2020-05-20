@@ -71,24 +71,12 @@ static void k_report(Keys_t *k) {
 
 	if(((USBD_CUSTOM_HID_HandleTypeDef *)hUsbDeviceFS.pClassData)->Protocol == 0) {
 		// handle boot protocol
-		uint8_t buttons[NSWITCH] = {0};
 		uint8_t report[8] = {0};
-		uint8_t pressed = 0;
-
-		pressed = lyt_get_pressed(k->layout, buttons, report, merged);
-
-		if (pressed > 6) {
-			pressed = 6;
-			memset(&report[2], UKEY_ERROR_ROLL_OVER, pressed);
-		} else {
-			memcpy(&report[2], buttons, pressed);
-		}
-
+		lyt_report_boot(k->layout, report, merged);
 		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, report, sizeof(report));
 	} else {
 		// handle report protocol
 		Bits_t report_bits = {0};
-
 		lyt_report_bits(k->layout, report_bits, merged);
 		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, (uint8_t *) report_bits, 29);
 		//	if (complete) {
