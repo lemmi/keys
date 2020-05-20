@@ -34,7 +34,7 @@ typedef struct {
 	uint8_t history[HISTORY_SIZE][ROWS];
 	uint8_t history_last[ROWS];
 	uint8_t hist_idx;
-	const Layout_t *layout;
+	uint8_t layout_idx;
 } Keys_t __attribute__ ((aligned (4)));
 
 Keys_t k = {0};
@@ -58,7 +58,9 @@ static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
 }
 
 static void k_report(Keys_t *k) {
+	USBD_CUSTOM_HID_HandleTypeDef *hhid = (USBD_CUSTOM_HID_HandleTypeDef *) hUsbDeviceFS.pClassData;
 	uint8_t merged[ROWS] = {0};
+	const Layout_t *layout;
 	int cmp;
 
 	k_merge_history(k, merged);
@@ -69,15 +71,22 @@ static void k_report(Keys_t *k) {
 		return;
 	}
 
-	if(((USBD_CUSTOM_HID_HandleTypeDef *)hUsbDeviceFS.pClassData)->Protocol == 0) {
+	if (hhid->Report_buf[0] & 1) {
+		// NumLock
+		layout = lyt_get_layout_num(k->layout_idx);
+	} else {
+		layout = lyt_get_layout(k->layout_idx);
+	}
+
+	if(hhid->Protocol == 0) {
 		// handle boot protocol
 		uint8_t report[8] = {0};
-		lyt_report_boot(k->layout, report, merged);
+		lyt_report_boot(layout, report, merged);
 		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, report, sizeof(report));
 	} else {
 		// handle report protocol
 		Bits_t report_bits = {0};
-		lyt_report_bits(k->layout, report_bits, merged);
+		lyt_report_bits(layout, report_bits, merged);
 		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, (uint8_t *) report_bits, 29);
 		//	if (complete) {
 		//		complete = 0;
@@ -98,7 +107,7 @@ void app() {
 	GPIO_AS_INPUT();
 
 	k_clear(&k);
-	lyt_select_layout(&k.layout);
+	k.layout_idx = lyt_select_layout();
 
 	// we have no need for systick. disable source and mask interrupt
 	HAL_SuspendTick();
