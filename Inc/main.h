@@ -68,6 +68,30 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define GPIO_LEFT_0_Pin LL_GPIO_PIN_10
+#define GPIO_LEFT_0_GPIO_Port GPIOB
+#define GPIO_LEFT_1_Pin LL_GPIO_PIN_11
+#define GPIO_LEFT_1_GPIO_Port GPIOB
+#define GPIO_LEFT_2_Pin LL_GPIO_PIN_12
+#define GPIO_LEFT_2_GPIO_Port GPIOB
+#define GPIO_LEFT_3_Pin LL_GPIO_PIN_13
+#define GPIO_LEFT_3_GPIO_Port GPIOB
+#define GPIO_LEFT_4_Pin LL_GPIO_PIN_14
+#define GPIO_LEFT_4_GPIO_Port GPIOB
+#define GPIO_LEFT_5_Pin LL_GPIO_PIN_15
+#define GPIO_LEFT_5_GPIO_Port GPIOB
+#define GPIO_RIGHT_5_Pin LL_GPIO_PIN_4
+#define GPIO_RIGHT_5_GPIO_Port GPIOB
+#define GPIO_RIGHT_4_Pin LL_GPIO_PIN_5
+#define GPIO_RIGHT_4_GPIO_Port GPIOB
+#define GPIO_RIGHT_3_Pin LL_GPIO_PIN_6
+#define GPIO_RIGHT_3_GPIO_Port GPIOB
+#define GPIO_RIGHT_2_Pin LL_GPIO_PIN_7
+#define GPIO_RIGHT_2_GPIO_Port GPIOB
+#define GPIO_RIGHT_1_Pin LL_GPIO_PIN_8
+#define GPIO_RIGHT_1_GPIO_Port GPIOB
+#define GPIO_RIGHT_0_Pin LL_GPIO_PIN_9
+#define GPIO_RIGHT_0_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

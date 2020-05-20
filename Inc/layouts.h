@@ -7,7 +7,6 @@
 #define COLS 8
 #define NSWITCH (ROWS * COLS)
 
-
 // https://www.usb.org/sites/default/files/documents/hut1_12v2.pdf
 
 #define UKEY_ERROR_ROLL_OVER 1
