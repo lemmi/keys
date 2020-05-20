@@ -118,7 +118,6 @@ __ALIGN_BEGIN static uint8_t CUSTOM_HID_ReportDesc_FS[USBD_CUSTOM_HID_REPORT_DES
   0x91, 0x03,                    //   OUTPUT (Cnst,Var,Abs)
   /* USER CODE END 0 */
   0xC0    /*     END_COLLECTION	             */
-
 };
 
 /* USER CODE BEGIN PRIVATE_VARIABLES */
