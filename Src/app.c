@@ -35,9 +35,7 @@ typedef struct {
 	uint8_t history_last[ROWS];
 	uint8_t hist_idx;
 	const Layout_t *layout;
-	Hand_t *hand;
-	uint16_t all_rows;
-} Keys_t;
+} Keys_t __attribute__ ((aligned (4)));
 
 Keys_t k = {0};
 
@@ -45,17 +43,9 @@ static void k_clear(Keys_t *k) {
 	memset(k, 0, sizeof(k->history) + sizeof(k->hist_idx));
 }
 
-static uint16_t k_all_rows(Keys_t *k) {
-	if (k->all_rows == 0) {
-		k->all_rows = (*k->hand)[0] | (*k->hand)[1] | (*k->hand)[2] | (*k->hand)[3] |
-			(*k->hand)[4] | (*k->hand)[5];
-	}
-	return k->all_rows;
-}
-
 static void k_scan(Keys_t *k) {
 	k->hist_idx = (k->hist_idx + 1) % HISTORY_SIZE;
-	get_rows(k->history[k->hist_idx], *k->hand);
+	get_rows(k->history[k->hist_idx]);
 }
 
 static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
@@ -120,7 +110,7 @@ void app() {
 	GPIO_AS_INPUT();
 
 	k_clear(&k);
-	lyt_select_layout(&k.layout, &k.hand);
+	lyt_select_layout(&k.layout);
 
 	// we have no need for systick. disable source and mask interrupt
 	HAL_SuspendTick();
@@ -146,7 +136,7 @@ static void SuspendCallback() {
 	HAL_TIM_Base_Start_IT(&htim14);
 }
 static void ResumeCallback() {
-	LL_GPIO_ResetOutputPin(GPIOB, k_all_rows(&k));
+	LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
 	GPIO_AS_INPUT();
 }
 void USB_Callback() {
@@ -185,7 +175,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	HAL_TIM_Base_Stop_IT(&htim14);
 	if (REASON == SUSPEND) {
 		GPIO_AS_INT();
-		LL_GPIO_SetOutputPin(GPIOB, k_all_rows(&k));
+		LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
 	}
 	if (REASON == REMOTE_WAKE) {
 		HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
