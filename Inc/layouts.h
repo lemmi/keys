@@ -1,10 +1,10 @@
 #ifndef LAYOUTS_H
 #define LAYOUTS_H
 
-#include <stdint.h>
 #include "bits.h"
+#include <stdint.h>
 
-#define ROWS (6*2)
+#define ROWS (6 * 2)
 #define COLS 8
 #define NSWITCH (ROWS * COLS)
 
@@ -148,11 +148,14 @@ typedef uint8_t Layout_t[ROWS][COLS];
 
 extern const uint16_t lyt_all_rows;
 
-void get_rows(uint8_t[ROWS]);
-uint8_t lyt_select_layout();
+void            get_rows(uint8_t[ROWS]);
+uint8_t         lyt_select_layout();
 const Layout_t *lyt_get_layout(uint8_t);
 const Layout_t *lyt_get_layout_num(uint8_t);
 
-uint8_t lyt_report_boot(const Layout_t *layout, uint8_t report[8], const uint8_t rows[ROWS]);
-uint8_t lyt_report_bits(const Layout_t *layout, Bits_t bs, const uint8_t rows[ROWS]);
+uint8_t lyt_report_boot(const Layout_t *layout,
+                        uint8_t         report[8],
+                        const uint8_t   rows[ROWS]);
+uint8_t
+lyt_report_bits(const Layout_t *layout, Bits_t bs, const uint8_t rows[ROWS]);
 #endif

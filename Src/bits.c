@@ -4,32 +4,30 @@
 #include "bits.h"
 
 void bits_set(Bits_t bs, const uint32_t b) {
-	if (b >= 8*32) {
+	if (b >= 8 * 32) {
 		return; // error
 	}
 
 	uint32_t word = b / 32;
-	uint32_t off = b % 32;
+	uint32_t off  = b % 32;
 	uint32_t mask = 1 << off;
 
 	bs[word] |= mask;
 }
 
 uint32_t bits_get(const Bits_t bs, const uint32_t b) {
-	if (b >= 8*32) {
+	if (b >= 8 * 32) {
 		return 0; // error
 	}
 
 	uint32_t word = b / 32;
-	uint32_t off = b % 32;
+	uint32_t off  = b % 32;
 	uint32_t mask = 1 << off;
 
 	return (bs[word] & mask) > 0;
 }
 
-static inline uint32_t words(const uint32_t l) {
-	return (l+31) / 32;
-}
+static inline uint32_t words(const uint32_t l) { return (l + 31) / 32; }
 
 void bits_or(Bits_t bs1, const Bits_t bs2) {
 	uint32_t i;
@@ -62,8 +60,4 @@ uint32_t bits_count(const Bits_t bs) {
 	return sum;
 }
 
-
-void bits_clear(Bits_t bs) {
-	memset(bs, 0, 32);
-}
-
+void bits_clear(Bits_t bs) { memset(bs, 0, 32); }

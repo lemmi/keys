@@ -4,8 +4,8 @@
 #include "usbd_customhid.h"
 
 #include "app.h"
-#include "layouts.h"
 #include "bits.h"
+#include "layouts.h"
 
 #define HISTORY_SIZE 3
 
@@ -13,10 +13,10 @@ __IO int complete;
 
 extern UART_HandleTypeDef huart1;
 extern USBD_HandleTypeDef hUsbDeviceFS;
-extern TIM_HandleTypeDef htim14;
+extern TIM_HandleTypeDef  htim14;
 
-static void GPIO_AS_INPUT();
-static void GPIO_AS_INT();
+static void    GPIO_AS_INPUT();
+static void    GPIO_AS_INT();
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev);
 
 typedef enum {
@@ -35,7 +35,7 @@ typedef struct {
 	uint8_t history_last[ROWS];
 	uint8_t hist_idx;
 	uint8_t layout_idx;
-} Keys_t __attribute__ ((aligned (4)));
+} Keys_t __attribute__((aligned(4)));
 
 Keys_t k = {0};
 
@@ -58,10 +58,11 @@ static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
 }
 
 static void k_report(Keys_t *k) {
-	USBD_CUSTOM_HID_HandleTypeDef *hhid = (USBD_CUSTOM_HID_HandleTypeDef *) hUsbDeviceFS.pClassData;
-	uint8_t merged[ROWS] = {0};
+	USBD_CUSTOM_HID_HandleTypeDef *hhid =
+	    (USBD_CUSTOM_HID_HandleTypeDef *) hUsbDeviceFS.pClassData;
+	uint8_t         merged[ROWS] = {0};
 	const Layout_t *layout;
-	int cmp;
+	int             cmp;
 
 	k_merge_history(k, merged);
 
@@ -78,7 +79,7 @@ static void k_report(Keys_t *k) {
 		layout = lyt_get_layout(k->layout_idx);
 	}
 
-	if(hhid->Protocol == 0) {
+	if (hhid->Protocol == 0) {
 		// handle boot protocol
 		uint8_t report[8] = {0};
 		lyt_report_boot(layout, report, merged);
@@ -90,7 +91,8 @@ static void k_report(Keys_t *k) {
 		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, (uint8_t *) report_bits, 29);
 		//	if (complete) {
 		//		complete = 0;
-		//		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)report_bits, 29);
+		//		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)report_bits,
+		// 29);
 		//	}
 	}
 }
@@ -112,7 +114,7 @@ void app() {
 	// we have no need for systick. disable source and mask interrupt
 	HAL_SuspendTick();
 
-	hUsbDeviceFS.pClass->SOF=SOFCallback;
+	hUsbDeviceFS.pClass->SOF = SOFCallback;
 
 	complete = 1;
 	while (1) {
@@ -122,14 +124,14 @@ void app() {
 
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
 	htim14.Instance->ARR = 4; // wait 500us to scan
-	REASON = SCAN;
+	REASON               = SCAN;
 	HAL_TIM_Base_Start_IT(&htim14);
 	return 0;
 }
 static void SuspendCallback() {
 	k_clear(&k);
 	htim14.Instance->ARR = 999; // wait 100ms
-	REASON = SUSPEND;
+	REASON               = SUSPEND;
 	HAL_TIM_Base_Start_IT(&htim14);
 }
 static void ResumeCallback() {
@@ -138,16 +140,16 @@ static void ResumeCallback() {
 }
 void USB_Callback() {
 	/*
-	uint16_t dbg_rows = 0;
+	   uint16_t dbg_rows = 0;
 
-	dbg_rows |= (USB->ISTR & USB_ISTR_ESOF) ? (*k.hand)[0] : (uint16_t) 0;
-	dbg_rows |= (USB->ISTR & USB_ISTR_SOF)  ? (*k.hand)[1] : (uint16_t) 0;
-	dbg_rows |= (USB->ISTR & USB_ISTR_CTR)  ? (*k.hand)[2] : (uint16_t) 0;
-	dbg_rows |= (USB->ISTR & USB_ISTR_SUSP) ? (*k.hand)[3] : (uint16_t) 0;
-	dbg_rows |= (USB->ISTR & USB_ISTR_WKUP) ? (*k.hand)[4] : (uint16_t) 0;
-	dbg_rows |= (USB->ISTR & USB_ISTR_ERR)  ? (*k.hand)[5] : (uint16_t) 0;
-	LL_GPIO_SetOutputPin(GPIOB, dbg_rows);
-	*/
+	   dbg_rows |= (USB->ISTR & USB_ISTR_ESOF) ? (*k.hand)[0] : (uint16_t) 0;
+	   dbg_rows |= (USB->ISTR & USB_ISTR_SOF)  ? (*k.hand)[1] : (uint16_t) 0;
+	   dbg_rows |= (USB->ISTR & USB_ISTR_CTR)  ? (*k.hand)[2] : (uint16_t) 0;
+	   dbg_rows |= (USB->ISTR & USB_ISTR_SUSP) ? (*k.hand)[3] : (uint16_t) 0;
+	   dbg_rows |= (USB->ISTR & USB_ISTR_WKUP) ? (*k.hand)[4] : (uint16_t) 0;
+	   dbg_rows |= (USB->ISTR & USB_ISTR_ERR)  ? (*k.hand)[5] : (uint16_t) 0;
+	   LL_GPIO_SetOutputPin(GPIOB, dbg_rows);
+	   */
 
 	if (USB->ISTR & USB_ISTR_SUSP) {
 		SuspendCallback();
@@ -155,7 +157,7 @@ void USB_Callback() {
 	if (USB->ISTR & USB_ISTR_WKUP) {
 		ResumeCallback();
 	}
-	//LL_GPIO_ResetOutputPin(GPIOB, k_all_rows(&k));
+	// LL_GPIO_ResetOutputPin(GPIOB, k_all_rows(&k));
 }
 static void Remote_Wake() {
 	if ((GPIOA->IDR & 0xFF) == 0) {
@@ -164,7 +166,7 @@ static void Remote_Wake() {
 	}
 	HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
 	htim14.Instance->ARR = 99; // 10ms
-	REASON = REMOTE_WAKE;
+	REASON               = REMOTE_WAKE;
 	HAL_TIM_Base_Start_IT(&htim14);
 }
 
@@ -181,11 +183,12 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		k_scan(&k);
 		k_report(&k);
 		/*
-		if (complete) {
-			complete = 0;
-			HAL_UART_Transmit_DMA(&huart1, (uint8_t *)k.report, sizeof(k.report));
-		}
-		*/
+		   if (complete) {
+		   complete = 0;
+		   HAL_UART_Transmit_DMA(&huart1, (uint8_t *)k.report,
+		   sizeof(k.report));
+		   }
+		   */
 	}
 	REASON = NONE;
 }
@@ -202,12 +205,12 @@ static void GPIO_AS_INT() {
 	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE6);
 	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE7);
 
-	EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_0 | LL_EXTI_LINE_1 | LL_EXTI_LINE_2 |
-		LL_EXTI_LINE_3 | LL_EXTI_LINE_4 | LL_EXTI_LINE_5 |
-		LL_EXTI_LINE_6 | LL_EXTI_LINE_7;
+	EXTI_InitStruct.Line_0_31 =
+	    LL_EXTI_LINE_0 | LL_EXTI_LINE_1 | LL_EXTI_LINE_2 | LL_EXTI_LINE_3 |
+	    LL_EXTI_LINE_4 | LL_EXTI_LINE_5 | LL_EXTI_LINE_6 | LL_EXTI_LINE_7;
 	EXTI_InitStruct.LineCommand = ENABLE;
-	EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
-	EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_RISING;
+	EXTI_InitStruct.Mode        = LL_EXTI_MODE_IT;
+	EXTI_InitStruct.Trigger     = LL_EXTI_TRIGGER_RISING;
 	LL_EXTI_Init(&EXTI_InitStruct);
 
 	NVIC_SetPriority(EXTI0_1_IRQn, 0);
@@ -221,12 +224,12 @@ static void GPIO_AS_INT() {
 static void GPIO_AS_INPUT() {
 	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 
-	EXTI_InitStruct.Line_0_31 = LL_EXTI_LINE_0 | LL_EXTI_LINE_1 | LL_EXTI_LINE_2 |
-		LL_EXTI_LINE_3 | LL_EXTI_LINE_4 | LL_EXTI_LINE_5 |
-		LL_EXTI_LINE_6 | LL_EXTI_LINE_7;
+	EXTI_InitStruct.Line_0_31 =
+	    LL_EXTI_LINE_0 | LL_EXTI_LINE_1 | LL_EXTI_LINE_2 | LL_EXTI_LINE_3 |
+	    LL_EXTI_LINE_4 | LL_EXTI_LINE_5 | LL_EXTI_LINE_6 | LL_EXTI_LINE_7;
 	EXTI_InitStruct.LineCommand = DISABLE;
-	EXTI_InitStruct.Mode = LL_EXTI_MODE_IT;
-	EXTI_InitStruct.Trigger = LL_EXTI_TRIGGER_NONE;
+	EXTI_InitStruct.Mode        = LL_EXTI_MODE_IT;
+	EXTI_InitStruct.Trigger     = LL_EXTI_TRIGGER_NONE;
 	LL_EXTI_Init(&EXTI_InitStruct);
 
 	NVIC_DisableIRQ(EXTI0_1_IRQn);
@@ -234,9 +237,7 @@ static void GPIO_AS_INPUT() {
 	NVIC_DisableIRQ(EXTI4_15_IRQn);
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) { 
-	complete = 1;
-}
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) { complete = 1; }
 
 void EXTI0_1_IRQHandler(void) {
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_0) != RESET) {
