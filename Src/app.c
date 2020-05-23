@@ -40,7 +40,9 @@ typedef struct {
 Keys_t k = {0};
 
 static void k_clear(Keys_t *k) {
-	memset(k, 0, sizeof(k->history) + sizeof(k->hist_idx));
+	uint8_t idx = k->layout_idx;
+	memset(k, 0, sizeof(*k));
+	k->layout_idx = idx;
 }
 
 static void k_scan(Keys_t *k) {
