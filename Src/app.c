@@ -233,10 +233,6 @@ static void GPIO_AS_INPUT() {
 	EXTI_InitStruct.Mode        = LL_EXTI_MODE_IT;
 	EXTI_InitStruct.Trigger     = LL_EXTI_TRIGGER_NONE;
 	LL_EXTI_Init(&EXTI_InitStruct);
-
-	NVIC_DisableIRQ(EXTI0_1_IRQn);
-	NVIC_DisableIRQ(EXTI2_3_IRQn);
-	NVIC_DisableIRQ(EXTI4_15_IRQn);
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) { complete = 1; }
