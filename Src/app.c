@@ -128,6 +128,11 @@ static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
 	htim14.Instance->ARR = 4; // wait 500us to scan
 	REASON               = SCAN;
 	HAL_TIM_Base_Start_IT(&htim14);
+
+	// this is possibly the best location to signal a ready to receive
+	// TODO: 
+	// setup UART DMA to receive
+	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
 	return 0;
 }
 static void SuspendCallback() {
@@ -182,6 +187,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
 	}
 	if (REASON == SCAN) {
+		// at this point we don't want to receive anything from the over half anymore
+		LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_DOWN);
+
 		k_scan(&k);
 		k_report(&k);
 		/*
