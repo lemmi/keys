@@ -235,6 +235,31 @@ static void GPIO_AS_INPUT() {
 	LL_EXTI_Init(&EXTI_InitStruct);
 }
 
+static void UART_AS_INT() {
+	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
+
+	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE9);
+
+	EXTI_InitStruct.Line_0_31   = LL_EXTI_LINE_9;
+	EXTI_InitStruct.LineCommand = ENABLE;
+	EXTI_InitStruct.Mode        = LL_EXTI_MODE_IT;
+	EXTI_InitStruct.Trigger     = LL_EXTI_TRIGGER_RISING;
+	LL_EXTI_Init(&EXTI_InitStruct);
+
+	NVIC_SetPriority(EXTI4_15_IRQn, 0);
+	NVIC_EnableIRQ(EXTI4_15_IRQn);
+}
+
+static void UART_AS_SINGLE_WIRE() {
+	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
+
+	EXTI_InitStruct.Line_0_31   = LL_EXTI_LINE_9;
+	EXTI_InitStruct.LineCommand = DISABLE;
+	EXTI_InitStruct.Mode        = LL_EXTI_MODE_IT;
+	EXTI_InitStruct.Trigger     = LL_EXTI_TRIGGER_NONE;
+	LL_EXTI_Init(&EXTI_InitStruct);
+}
+
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) { complete = 1; }
 
 void EXTI0_1_IRQHandler(void) {
@@ -258,6 +283,10 @@ void EXTI2_3_IRQHandler(void) {
 }
 
 void EXTI4_15_IRQHandler(void) {
+	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_9) != RESET) {
+		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_9);
+		return;
+	}
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET) {
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_4);
 	}
