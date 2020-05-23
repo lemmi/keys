@@ -15,7 +15,7 @@ extern UART_HandleTypeDef huart1;
 extern USBD_HandleTypeDef hUsbDeviceFS;
 extern TIM_HandleTypeDef  htim6;
 extern TIM_HandleTypeDef  htim7;
-extern TIM_HandleTypeDef  htim14;
+extern TIM_HandleTypeDef  htim16;
 
 static void    GPIO_AS_INPUT();
 static void    GPIO_AS_INT();
@@ -136,9 +136,7 @@ static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
 }
 static void SuspendCallback() {
 	k_clear(&k);
-	htim14.Instance->ARR = 999; // wait 100ms
-	REASON               = SUSPEND;
-	HAL_TIM_Base_Start_IT(&htim14);
+	HAL_TIM_Base_Start_IT(&htim16);
 }
 static void ResumeCallback() {
 	LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
@@ -171,9 +169,7 @@ static void Remote_Wake() {
 		return;
 	}
 	HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
-	htim14.Instance->ARR = 99; // 10ms
-	REASON               = REMOTE_WAKE;
-	HAL_TIM_Base_Start_IT(&htim14);
+	HAL_TIM_Base_Start_IT(&htim7);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
@@ -191,17 +187,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		   }
 		*/
 	} else if (htim == &htim7) {
-	} else if (htim == &htim14) {
-		HAL_TIM_Base_Stop_IT(&htim14);
-		if (REASON == SUSPEND) {
-			GPIO_AS_INT();
-			LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
-		}
-		if (REASON == REMOTE_WAKE) {
-			HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
-		}
+		HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
+	} else if (htim == &htim16) {
+		GPIO_AS_INT();
+		LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
 	}
-	REASON = NONE;
 }
 
 static void GPIO_AS_INT() {
