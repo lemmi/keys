@@ -13,6 +13,8 @@ __IO int complete;
 
 extern UART_HandleTypeDef huart1;
 extern USBD_HandleTypeDef hUsbDeviceFS;
+extern TIM_HandleTypeDef  htim6;
+extern TIM_HandleTypeDef  htim7;
 extern TIM_HandleTypeDef  htim14;
 
 static void    GPIO_AS_INPUT();
@@ -23,7 +25,6 @@ typedef enum {
 	NONE,
 	SUSPEND,
 	REMOTE_WAKE,
-	SCAN,
 } Reason_t;
 
 __IO Reason_t REASON;
@@ -125,9 +126,7 @@ void app() {
 }
 
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
-	htim14.Instance->ARR = 4; // wait 500us to scan
-	REASON               = SCAN;
-	HAL_TIM_Base_Start_IT(&htim14);
+	HAL_TIM_Base_Start_IT(&htim6);
 
 	// this is possibly the best location to signal a ready to receive
 	// TODO: 
@@ -178,15 +177,7 @@ static void Remote_Wake() {
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	HAL_TIM_Base_Stop_IT(&htim14);
-	if (REASON == SUSPEND) {
-		GPIO_AS_INT();
-		LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
-	}
-	if (REASON == REMOTE_WAKE) {
-		HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
-	}
-	if (REASON == SCAN) {
+	if (htim == &htim6) {
 		// at this point we don't want to receive anything from the over half anymore
 		LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_DOWN);
 
@@ -198,7 +189,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		   HAL_UART_Transmit_DMA(&huart1, (uint8_t *)k.report,
 		   sizeof(k.report));
 		   }
-		   */
+		*/
+	} else if (htim == &htim7) {
+	} else if (htim == &htim14) {
+		HAL_TIM_Base_Stop_IT(&htim14);
+		if (REASON == SUSPEND) {
+			GPIO_AS_INT();
+			LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
+		}
+		if (REASON == REMOTE_WAKE) {
+			HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
+		}
 	}
 	REASON = NONE;
 }
