@@ -13,21 +13,10 @@ __IO int complete;
 
 extern UART_HandleTypeDef huart1;
 extern USBD_HandleTypeDef hUsbDeviceFS;
-extern TIM_HandleTypeDef  htim6;
-extern TIM_HandleTypeDef  htim7;
-extern TIM_HandleTypeDef  htim16;
 
 static void    GPIO_AS_INPUT();
 static void    GPIO_AS_INT();
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev);
-
-typedef enum {
-	NONE,
-	SUSPEND,
-	REMOTE_WAKE,
-} Reason_t;
-
-__IO Reason_t REASON;
 
 typedef const uint16_t Hand_t[ROWS];
 
@@ -120,61 +109,31 @@ void app() {
 	hUsbDeviceFS.pClass->SOF = SOFCallback;
 
 	complete = 1;
+
+	LL_TIM_EnableIT_UPDATE(TIM6);
+	LL_TIM_EnableIT_UPDATE(TIM7);
+	LL_TIM_EnableIT_UPDATE(TIM16);
+
 	while (1) {
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	}
 }
 
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
-	HAL_TIM_Base_Start_IT(&htim6);
+	LL_TIM_EnableCounter(TIM6); // Wait for 500us
 
 	// this is possibly the best location to signal a ready to receive
-	// TODO: 
+	// TODO:
 	// setup UART DMA to receive
 	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
 	return 0;
 }
-static void SuspendCallback() {
-	k_clear(&k);
-	HAL_TIM_Base_Start_IT(&htim16);
-}
-static void ResumeCallback() {
-	LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
-	GPIO_AS_INPUT();
-}
-void USB_Callback() {
-	/*
-	   uint16_t dbg_rows = 0;
-
-	   dbg_rows |= (USB->ISTR & USB_ISTR_ESOF) ? (*k.hand)[0] : (uint16_t) 0;
-	   dbg_rows |= (USB->ISTR & USB_ISTR_SOF)  ? (*k.hand)[1] : (uint16_t) 0;
-	   dbg_rows |= (USB->ISTR & USB_ISTR_CTR)  ? (*k.hand)[2] : (uint16_t) 0;
-	   dbg_rows |= (USB->ISTR & USB_ISTR_SUSP) ? (*k.hand)[3] : (uint16_t) 0;
-	   dbg_rows |= (USB->ISTR & USB_ISTR_WKUP) ? (*k.hand)[4] : (uint16_t) 0;
-	   dbg_rows |= (USB->ISTR & USB_ISTR_ERR)  ? (*k.hand)[5] : (uint16_t) 0;
-	   LL_GPIO_SetOutputPin(GPIOB, dbg_rows);
-	   */
-
-	if (USB->ISTR & USB_ISTR_SUSP) {
-		SuspendCallback();
-	}
-	if (USB->ISTR & USB_ISTR_WKUP) {
-		ResumeCallback();
-	}
-	// LL_GPIO_ResetOutputPin(GPIOB, k_all_rows(&k));
-}
-static void Remote_Wake() {
-	if ((GPIOA->IDR & 0xFF) == 0) {
-		// there is no button pressed that we are interested in
-		return;
-	}
-	HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
-	HAL_TIM_Base_Start_IT(&htim7);
-}
-
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
-	if (htim == &htim6) {
-		// at this point we don't want to receive anything from the over half anymore
+void TIM6_DAC_IRQHandler(void) {
+	// triggered by SOFCallback
+	if (LL_TIM_IsActiveFlag_UPDATE(TIM6)) {
+		LL_TIM_ClearFlag_UPDATE(TIM6);
+		// at this point we don't want to receive anything from the over half
+		// anymore
 		LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_DOWN);
 
 		k_scan(&k);
@@ -186,12 +145,59 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		   sizeof(k.report));
 		   }
 		*/
-	} else if (htim == &htim7) {
+	}
+}
+
+static void Remote_Wake() {
+	if ((GPIOA->IDR & 0xFF) == 0) {
+		// there is no button pressed that we are interested in
+		return;
+	}
+	HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
+	LL_TIM_EnableCounter(TIM7); // Wait for 10ms
+}
+void TIM7_IRQHandler(void) {
+	// triggered by Remote_Wake
+	if (LL_TIM_IsActiveFlag_UPDATE(TIM7)) {
+		LL_TIM_ClearFlag_UPDATE(TIM7);
 		HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
-	} else if (htim == &htim16) {
+	}
+}
+
+static void SuspendCallback() {
+	k_clear(&k);
+	LL_TIM_EnableCounter(TIM16); // Wait for 100ms
+}
+void TIM16_IRQHandler(void) {
+	// triggered by SuspendCallback
+	if (LL_TIM_IsActiveFlag_UPDATE(TIM16)) {
+		LL_TIM_ClearFlag_UPDATE(TIM16);
 		GPIO_AS_INT();
 		LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
 	}
+}
+
+static void ResumeCallback() {
+	LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
+	GPIO_AS_INPUT();
+}
+void USB_Callback() {
+	// uint16_t dbg_rows = 0;
+	// dbg_rows |= (USB->ISTR & USB_ISTR_ESOF) ? (*k.hand)[0] : (uint16_t) 0;
+	// dbg_rows |= (USB->ISTR & USB_ISTR_SOF)  ? (*k.hand)[1] : (uint16_t) 0;
+	// dbg_rows |= (USB->ISTR & USB_ISTR_CTR)  ? (*k.hand)[2] : (uint16_t) 0;
+	// dbg_rows |= (USB->ISTR & USB_ISTR_SUSP) ? (*k.hand)[3] : (uint16_t) 0;
+	// dbg_rows |= (USB->ISTR & USB_ISTR_WKUP) ? (*k.hand)[4] : (uint16_t) 0;
+	// dbg_rows |= (USB->ISTR & USB_ISTR_ERR)  ? (*k.hand)[5] : (uint16_t) 0;
+	// LL_GPIO_SetOutputPin(GPIOB, dbg_rows);
+
+	if (USB->ISTR & USB_ISTR_SUSP) {
+		SuspendCallback();
+	}
+	if (USB->ISTR & USB_ISTR_WKUP) {
+		ResumeCallback();
+	}
+	// LL_GPIO_ResetOutputPin(GPIOB, k_all_rows(&k));
 }
 
 static void GPIO_AS_INT() {
@@ -234,7 +240,7 @@ static void GPIO_AS_INPUT() {
 	LL_EXTI_Init(&EXTI_InitStruct);
 }
 
-static void UART_AS_INT() {
+void UART_AS_INT() {
 	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 
 	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE9);
@@ -249,7 +255,7 @@ static void UART_AS_INT() {
 	NVIC_EnableIRQ(EXTI4_15_IRQn);
 }
 
-static void UART_AS_SINGLE_WIRE() {
+void UART_AS_SINGLE_WIRE() {
 	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 
 	EXTI_InitStruct.Line_0_31   = LL_EXTI_LINE_9;
