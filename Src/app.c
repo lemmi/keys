@@ -7,7 +7,9 @@
 #include "bits.h"
 #include "layouts.h"
 
-#define HISTORY_SIZE 3
+// prefer powers of two to nearby integers.  produces smaller and faster code,
+// as this architecture has no division or modulus
+#define HISTORY_SIZE 4
 
 __IO int complete;
 
