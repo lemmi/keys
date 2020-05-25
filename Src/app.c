@@ -16,6 +16,10 @@ extern USBD_HandleTypeDef hUsbDeviceFS;
 
 static void    GPIO_AS_INPUT();
 static void    GPIO_AS_INT();
+static void    UART_AS_INT();
+static void    UART_AS_SINGLE_WIRE();
+static void    UART_AS_RX();
+static void    UART_AS_TX();
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev);
 
 typedef const uint16_t Hand_t[ROWS];
@@ -23,11 +27,12 @@ typedef const uint16_t Hand_t[ROWS];
 typedef struct {
 	uint8_t history[HISTORY_SIZE][ROWS];
 	uint8_t history_last[ROWS];
+	uint8_t other[ROWS];
 	uint8_t hist_idx;
 	uint8_t layout_idx;
 } Keys_t __attribute__((aligned(4)));
 
-Keys_t k = {0};
+static Keys_t k = {0};
 
 static void k_clear(Keys_t *k) {
 	uint8_t idx = k->layout_idx;
@@ -38,6 +43,11 @@ static void k_clear(Keys_t *k) {
 static void k_scan(Keys_t *k) {
 	k->hist_idx = (k->hist_idx + 1) % HISTORY_SIZE;
 	get_rows(k->history[k->hist_idx]);
+	for (uint8_t r = 0; r < ROWS; r++) {
+		k->history[k->hist_idx][r] |= k->other[r];
+	}
+
+	memset(k->other, 0, ROWS);
 }
 
 static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
@@ -110,22 +120,64 @@ void app() {
 
 	complete = 1;
 
+	LL_TIM_ClearFlag_UPDATE(TIM6);
 	LL_TIM_EnableIT_UPDATE(TIM6);
+	LL_TIM_ClearFlag_UPDATE(TIM7);
 	LL_TIM_EnableIT_UPDATE(TIM7);
+	LL_TIM_ClearFlag_UPDATE(TIM16);
 	LL_TIM_EnableIT_UPDATE(TIM16);
+
+	LL_TIM_SetUpdateSource(TIM17, LL_TIM_UPDATESOURCE_COUNTER);
+	LL_TIM_ClearFlag_UPDATE(TIM17);
+	LL_TIM_EnableIT_UPDATE(TIM17);
+	LL_TIM_EnableCounter(TIM17);
 
 	while (1) {
 		HAL_PWR_EnterSLEEPMode(PWR_MAINREGULATOR_ON, PWR_SLEEPENTRY_WFI);
 	}
 }
 
+typedef union {
+	uint8_t bytes[ROWS + 4];
+	struct {
+		uint8_t  rows[ROWS];
+		uint32_t chksum;
+	};
+} Wirefmt_t;
+
+static uint32_t crc(const uint8_t *data, const size_t n) {
+	LL_CRC_ResetCRCCalculationUnit(CRC);
+	int i = 0;
+	// saves 6µS
+	for (; i + 3 < n; i += 4) {
+		LL_CRC_FeedData32(CRC, *(const uint32_t *) &data[i]);
+	}
+	for (; i < n; i++) {
+		LL_CRC_FeedData8(CRC, data[i]);
+	}
+	return LL_CRC_ReadData32(CRC);
+}
+
+static uint32_t w_crc_calc(const Wirefmt_t *w) { return crc(w->rows, ROWS); }
+static void     w_crc_fill(Wirefmt_t *w) { w->chksum = w_crc_calc(w); }
+static uint32_t w_crc_check(const Wirefmt_t *w) {
+	return w_crc_calc(w) == w->chksum;
+}
+
+static Wirefmt_t MsgBuf;
+
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
 	LL_TIM_EnableCounter(TIM6); // Wait for 500us
+	LL_TIM_GenerateEvent_UPDATE(TIM17);
+	// LL_TIM_DisableIT_UPDATE(TIM17);
+	// LL_TIM_DisableCounter(TIM17); // We have an USB connection, reset the
+	// timeout
 
 	// this is possibly the best location to signal a ready to receive
-	// TODO:
-	// setup UART DMA to receive
-	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
+	UART_AS_RX();
+
+	HAL_UART_Receive_DMA(&huart1, MsgBuf.bytes, sizeof(MsgBuf.bytes));
+
 	return 0;
 }
 void TIM6_DAC_IRQHandler(void) {
@@ -134,6 +186,7 @@ void TIM6_DAC_IRQHandler(void) {
 		LL_TIM_ClearFlag_UPDATE(TIM6);
 		// at this point we don't want to receive anything from the over half
 		// anymore
+		HAL_UART_DMAStop(&huart1);
 		LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_DOWN);
 
 		k_scan(&k);
@@ -174,6 +227,14 @@ void TIM16_IRQHandler(void) {
 		LL_TIM_ClearFlag_UPDATE(TIM16);
 		GPIO_AS_INT();
 		LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
+	}
+}
+
+void TIM17_IRQHandler(void) {
+	if (LL_TIM_IsActiveFlag_UPDATE(TIM17)) {
+		LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_NO);
+		LL_TIM_ClearFlag_UPDATE(TIM17);
+		UART_AS_INT();
 	}
 }
 
@@ -240,7 +301,7 @@ static void GPIO_AS_INPUT() {
 	LL_EXTI_Init(&EXTI_InitStruct);
 }
 
-void UART_AS_INT() {
+static void UART_AS_INT() {
 	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 
 	LL_SYSCFG_SetEXTISource(LL_SYSCFG_EXTI_PORTA, LL_SYSCFG_EXTI_LINE9);
@@ -255,7 +316,7 @@ void UART_AS_INT() {
 	NVIC_EnableIRQ(EXTI4_15_IRQn);
 }
 
-void UART_AS_SINGLE_WIRE() {
+static void UART_AS_SINGLE_WIRE() {
 	LL_EXTI_InitTypeDef EXTI_InitStruct = {0};
 
 	EXTI_InitStruct.Line_0_31   = LL_EXTI_LINE_9;
@@ -265,7 +326,69 @@ void UART_AS_SINGLE_WIRE() {
 	LL_EXTI_Init(&EXTI_InitStruct);
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) { complete = 1; }
+static void UART_CLEAR_IT() {
+	__HAL_UART_FLUSH_DRREGISTER(&huart1);
+	__HAL_UART_CLEAR_FLAG(&huart1, UART_CLEAR_TCF | UART_CLEAR_IDLEF |
+	                                   UART_CLEAR_OREF | UART_CLEAR_NEF |
+	                                   UART_CLEAR_PEF | UART_CLEAR_FEF);
+}
+
+static void UART_AS_TX() {
+	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_NO);
+	LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_PUSHPULL);
+	HAL_HalfDuplex_EnableTransmitter(&huart1);
+	UART_CLEAR_IT();
+}
+
+static void UART_AS_RX() {
+	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
+	LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_OPENDRAIN);
+
+	// Make SURE we read a stable high input, or UART will falsly detect a
+	// start bit.
+	//
+	// TODO
+	// don't loop forever, in case something pulls down the line
+	for (int i = 0; i < 8;) {
+		if (LL_GPIO_ReadInputPort(GPIOA) & LL_GPIO_PIN_9) {
+			++i;
+		} else {
+			i = 0;
+		}
+	}
+
+	HAL_HalfDuplex_EnableReceiver(&huart1);
+	UART_CLEAR_IT();
+}
+
+static void Report_UART() {
+	get_rows(MsgBuf.rows);
+	w_crc_fill(&MsgBuf);
+
+	if (complete) {
+		complete = 0;
+		UART_AS_SINGLE_WIRE();
+		UART_AS_TX();
+		HAL_UART_Transmit_DMA(&huart1, MsgBuf.bytes, sizeof(MsgBuf.bytes));
+	}
+}
+
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+	complete = 1;
+	UART_AS_INT();
+}
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_NO);
+	memset(k.other, 0, sizeof(k.other));
+}
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_DOWN);
+	if (w_crc_check(&MsgBuf)) {
+		memcpy(k.other, MsgBuf.rows, sizeof(k.other));
+	} else {
+		memset(k.other, 0, sizeof(k.other));
+	}
+}
 
 void EXTI0_1_IRQHandler(void) {
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_0) != RESET) {
@@ -290,6 +413,7 @@ void EXTI2_3_IRQHandler(void) {
 void EXTI4_15_IRQHandler(void) {
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_9) != RESET) {
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_9);
+		Report_UART();
 		return;
 	}
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET) {
