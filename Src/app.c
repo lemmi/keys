@@ -42,22 +42,30 @@ static void k_clear(Keys_t *k) {
 	k->layout_idx = idx;
 }
 
+static inline void
+vec_or(uint8_t *restrict dst, const uint8_t *restrict src, size_t n) {
+	uint32_t r;
+	// manually vectorize this, as the compiler won't do it for us...
+	for (r = 0; r + 3 < n; r += 4) {
+		*(uint32_t *) &dst[r] |= *(uint32_t *) &src[r];
+	}
+	for (; r < ROWS; r++) {
+		dst[r] |= src[r];
+	}
+}
+
 static void k_scan(Keys_t *k) {
 	k->hist_idx = (k->hist_idx + 1) % HISTORY_SIZE;
 	get_rows(k->history[k->hist_idx]);
-	for (uint8_t r = 0; r < ROWS; r++) {
-		k->history[k->hist_idx][r] |= k->other[r];
-	}
+	vec_or(k->history[k->hist_idx], k->other, ROWS);
 
 	memset(k->other, 0, ROWS);
 }
 
 static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
-	size_t i, r;
+	size_t i;
 	for (i = 0; i < HISTORY_SIZE; i++) {
-		for (r = 0; r < ROWS; r++) {
-			merged[r] |= k->history[i][r];
-		}
+		vec_or(merged, k->history[k->hist_idx], ROWS);
 	}
 }
 
