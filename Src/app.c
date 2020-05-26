@@ -173,6 +173,14 @@ static void     w_crc_fill(Wirefmt_t *w) { w->chksum = w_crc_calc(w); }
 static uint32_t w_crc_check(const Wirefmt_t *w) {
 	return w_crc_calc(w) == w->chksum;
 }
+static uint32_t w_is_zero(const Wirefmt_t *w) {
+	for (int i = 0; i < sizeof(w->rows); i++) {
+		if (w->rows[i] != 0) {
+			return 0;
+		}
+	}
+	return 1;
+}
 
 static Wirefmt_t MsgBuf;
 
@@ -373,6 +381,10 @@ static void UART_AS_RX() {
 
 static void Report_UART() {
 	get_rows(MsgBuf.rows);
+	if (w_is_zero(&MsgBuf)) {
+		// no need to send the state if no button is pressed
+		return;
+	}
 	w_crc_fill(&MsgBuf);
 
 	if (complete) {
