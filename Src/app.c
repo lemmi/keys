@@ -50,24 +50,14 @@ static void     w_crc_fill(Wirefmt_t *w) { w->chksum = w_crc_calc(w); }
 static uint32_t w_crc_check(const Wirefmt_t *w) {
 	return w_crc_calc(w) == w->chksum;
 }
-static void w_clear(Wirefmt_t *w) {
-	memset(w, 0, sizeof(Wirefmt_t));
-}
-static uint32_t w_is_zero(const Wirefmt_t *w) {
-	for (int i = 0; i < sizeof(w->rows); i++) {
-		if (w->rows[i] != 0) {
-			return 0;
-		}
-	}
-	return 1;
-}
+static void w_clear(Wirefmt_t *w) { memset(w, 0, sizeof(Wirefmt_t)); }
 
 typedef struct {
-	uint8_t history[HISTORY_SIZE][ROWS];
-	uint8_t history_last[ROWS];
+	uint8_t   history[HISTORY_SIZE][ROWS];
+	uint8_t   history_last[ROWS];
 	Wirefmt_t MsgBuf;
-	uint8_t hist_idx;
-	uint8_t layout_idx;
+	uint8_t   hist_idx;
+	uint8_t   layout_idx;
 } Keys_t __attribute__((aligned(4)));
 
 static Keys_t k = {0};
@@ -391,8 +381,7 @@ static void UART_AS_RX() {
 }
 
 static void Report_UART() {
-	get_rows(k.MsgBuf.rows);
-	if (w_is_zero(&k.MsgBuf)) {
+	if (get_rows(k.MsgBuf.rows) == 0) {
 		// no need to send the state if no button is pressed
 		return;
 	}

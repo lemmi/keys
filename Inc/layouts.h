@@ -148,7 +148,7 @@ typedef uint8_t Layout_t[ROWS][COLS];
 
 extern const uint16_t lyt_all_rows;
 
-void            get_rows(uint8_t[ROWS]);
+uint32_t        get_rows(uint8_t[ROWS]);
 uint8_t         lyt_select_layout();
 const Layout_t *lyt_get_layout(uint8_t);
 const Layout_t *lyt_get_layout_num(uint8_t);

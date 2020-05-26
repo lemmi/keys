@@ -283,9 +283,23 @@ static uint8_t get_row(const uint16_t r) {
 	return ret;
 }
 
-void get_rows(uint8_t dst[ROWS]) {
-	int r;
-	for (r = 0; r < ROWS; r++) {
+uint32_t get_rows(uint8_t dst[ROWS]) {
+	LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
+	if ((LL_GPIO_ReadInputPort(GPIOA) & 0xFF) == 0) {
+		// no buttons pressed
+		LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
+		memset(dst, 0, ROWS);
+		return 0;
+	}
+
+	LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
+
+	for (uint32_t r = 0; r < ROWS; r++) {
 		dst[r] = get_row(ALL_ROWS[r]);
 	}
+
+	// this might end up scanning nothing,
+	// but still report that we scanned everything
+
+	return 1;
 }
