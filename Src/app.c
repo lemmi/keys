@@ -125,11 +125,6 @@ static void k_report(Keys_t *k) {
 		Bits_t report_bits = {0};
 		lyt_report_bits(layout, report_bits, merged);
 		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, (uint8_t *) report_bits, 29);
-		//	if (complete) {
-		//		complete = 0;
-		//		HAL_UART_Transmit_DMA(&huart1, (uint8_t *)report_bits,
-		// 29);
-		//	}
 	}
 }
 
@@ -174,9 +169,6 @@ void app() {
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
 	LL_TIM_EnableCounter(TIM6); // Wait for 500us
 	LL_TIM_GenerateEvent_UPDATE(TIM17);
-	// LL_TIM_DisableIT_UPDATE(TIM17);
-	// LL_TIM_DisableCounter(TIM17); // We have an USB connection, reset the
-	// timeout
 
 	// this is possibly the best location to signal a ready to receive
 	UART_AS_RX();
@@ -196,13 +188,6 @@ void TIM6_DAC_IRQHandler(void) {
 
 		k_scan(&k);
 		k_report(&k);
-		/*
-		   if (complete) {
-		   complete = 0;
-		   HAL_UART_Transmit_DMA(&huart1, (uint8_t *)k.report,
-		   sizeof(k.report));
-		   }
-		*/
 	}
 }
 
