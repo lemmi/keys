@@ -355,6 +355,22 @@ static void UART_AS_TX() {
 	UART_CLEAR_IT();
 }
 
+static uint32_t wait_stable_idle(uint32_t t) {
+	UNUSED(t);
+	// TODO
+	// don't loop forever, in case something pulls down the line
+	//
+	for (int i = 0; i < 8;) {
+		if (LL_GPIO_ReadInputPort(GPIOA) & LL_GPIO_PIN_9) {
+			++i;
+		} else {
+			i = 0;
+		}
+	}
+
+	return 1;
+}
+
 static void UART_AS_RX() {
 	// clear the receive buffer to not receive garbage or carry old data arounf
 	w_clear(&k.MsgBuf);
@@ -367,17 +383,9 @@ static void UART_AS_RX() {
 	//
 	// One transfer takes about 150uS.
 	//
-	// TODO
-	// don't loop forever, in case something pulls down the line
-	//
-	for (int i = 0; i < 8;) {
-		if (LL_GPIO_ReadInputPort(GPIOA) & LL_GPIO_PIN_9) {
-			++i;
-		} else {
-			i = 0;
-		}
+	if (!wait_stable_idle(0)) {
+		return;
 	}
-
 	HAL_HalfDuplex_EnableReceiver(&huart1);
 	UART_CLEAR_IT();
 }
@@ -392,6 +400,11 @@ static void Report_UART() {
 
 	if (complete) {
 		complete = 0;
+		// also wait here for stable line, so we don't send before receiver is
+		// ready
+		if (!wait_stable_idle(0)) {
+			return;
+		}
 		UART_AS_SINGLE_WIRE();
 		UART_AS_TX();
 		HAL_UART_Transmit_DMA(&huart1, k.MsgBuf.bytes, sizeof(k.MsgBuf.bytes));
