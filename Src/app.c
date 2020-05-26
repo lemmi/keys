@@ -24,12 +24,48 @@ static void    UART_AS_RX();
 static void    UART_AS_TX();
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev);
 
-typedef const uint16_t Hand_t[ROWS];
+typedef union {
+	uint8_t bytes[ROWS + 4];
+	struct {
+		uint8_t  rows[ROWS];
+		uint32_t chksum;
+	};
+} Wirefmt_t;
+
+static uint32_t crc(const uint8_t *data, const size_t n) {
+	LL_CRC_ResetCRCCalculationUnit(CRC);
+	int i = 0;
+	// saves 6µS
+	for (; i + 3 < n; i += 4) {
+		LL_CRC_FeedData32(CRC, *(const uint32_t *) &data[i]);
+	}
+	for (; i < n; i++) {
+		LL_CRC_FeedData8(CRC, data[i]);
+	}
+	return LL_CRC_ReadData32(CRC);
+}
+
+static uint32_t w_crc_calc(const Wirefmt_t *w) { return crc(w->rows, ROWS); }
+static void     w_crc_fill(Wirefmt_t *w) { w->chksum = w_crc_calc(w); }
+static uint32_t w_crc_check(const Wirefmt_t *w) {
+	return w_crc_calc(w) == w->chksum;
+}
+static void w_clear(Wirefmt_t *w) {
+	memset(w, 0, sizeof(Wirefmt_t));
+}
+static uint32_t w_is_zero(const Wirefmt_t *w) {
+	for (int i = 0; i < sizeof(w->rows); i++) {
+		if (w->rows[i] != 0) {
+			return 0;
+		}
+	}
+	return 1;
+}
 
 typedef struct {
 	uint8_t history[HISTORY_SIZE][ROWS];
 	uint8_t history_last[ROWS];
-	uint8_t other[ROWS];
+	Wirefmt_t MsgBuf;
 	uint8_t hist_idx;
 	uint8_t layout_idx;
 } Keys_t __attribute__((aligned(4)));
@@ -57,9 +93,6 @@ vec_or(uint8_t *restrict dst, const uint8_t *restrict src, size_t n) {
 static void k_scan(Keys_t *k) {
 	k->hist_idx = (k->hist_idx + 1) % HISTORY_SIZE;
 	get_rows(k->history[k->hist_idx]);
-	vec_or(k->history[k->hist_idx], k->other, ROWS);
-
-	memset(k->other, 0, ROWS);
 }
 
 static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
@@ -67,6 +100,7 @@ static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
 	for (i = 0; i < HISTORY_SIZE; i++) {
 		vec_or(merged, k->history[k->hist_idx], ROWS);
 	}
+	vec_or(merged, k->MsgBuf.rows, ROWS);
 }
 
 static void k_report(Keys_t *k) {
@@ -147,43 +181,6 @@ void app() {
 	}
 }
 
-typedef union {
-	uint8_t bytes[ROWS + 4];
-	struct {
-		uint8_t  rows[ROWS];
-		uint32_t chksum;
-	};
-} Wirefmt_t;
-
-static uint32_t crc(const uint8_t *data, const size_t n) {
-	LL_CRC_ResetCRCCalculationUnit(CRC);
-	int i = 0;
-	// saves 6µS
-	for (; i + 3 < n; i += 4) {
-		LL_CRC_FeedData32(CRC, *(const uint32_t *) &data[i]);
-	}
-	for (; i < n; i++) {
-		LL_CRC_FeedData8(CRC, data[i]);
-	}
-	return LL_CRC_ReadData32(CRC);
-}
-
-static uint32_t w_crc_calc(const Wirefmt_t *w) { return crc(w->rows, ROWS); }
-static void     w_crc_fill(Wirefmt_t *w) { w->chksum = w_crc_calc(w); }
-static uint32_t w_crc_check(const Wirefmt_t *w) {
-	return w_crc_calc(w) == w->chksum;
-}
-static uint32_t w_is_zero(const Wirefmt_t *w) {
-	for (int i = 0; i < sizeof(w->rows); i++) {
-		if (w->rows[i] != 0) {
-			return 0;
-		}
-	}
-	return 1;
-}
-
-static Wirefmt_t MsgBuf;
-
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
 	LL_TIM_EnableCounter(TIM6); // Wait for 500us
 	LL_TIM_GenerateEvent_UPDATE(TIM17);
@@ -194,7 +191,7 @@ static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
 	// this is possibly the best location to signal a ready to receive
 	UART_AS_RX();
 
-	HAL_UART_Receive_DMA(&huart1, MsgBuf.bytes, sizeof(MsgBuf.bytes));
+	HAL_UART_Receive_DMA(&huart1, k.MsgBuf.bytes, sizeof(k.MsgBuf.bytes));
 
 	return 0;
 }
@@ -359,14 +356,20 @@ static void UART_AS_TX() {
 }
 
 static void UART_AS_RX() {
-	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
+	// clear the receive buffer to not receive garbage or carry old data arounf
+	w_clear(&k.MsgBuf);
+
 	LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_OPENDRAIN);
+	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
 
 	// Make SURE we read a stable high input, or UART will falsly detect a
 	// start bit.
 	//
+	// One transfer takes about 150uS.
+	//
 	// TODO
 	// don't loop forever, in case something pulls down the line
+	//
 	for (int i = 0; i < 8;) {
 		if (LL_GPIO_ReadInputPort(GPIOA) & LL_GPIO_PIN_9) {
 			++i;
@@ -380,18 +383,18 @@ static void UART_AS_RX() {
 }
 
 static void Report_UART() {
-	get_rows(MsgBuf.rows);
-	if (w_is_zero(&MsgBuf)) {
+	get_rows(k.MsgBuf.rows);
+	if (w_is_zero(&k.MsgBuf)) {
 		// no need to send the state if no button is pressed
 		return;
 	}
-	w_crc_fill(&MsgBuf);
+	w_crc_fill(&k.MsgBuf);
 
 	if (complete) {
 		complete = 0;
 		UART_AS_SINGLE_WIRE();
 		UART_AS_TX();
-		HAL_UART_Transmit_DMA(&huart1, MsgBuf.bytes, sizeof(MsgBuf.bytes));
+		HAL_UART_Transmit_DMA(&huart1, k.MsgBuf.bytes, sizeof(k.MsgBuf.bytes));
 	}
 }
 
@@ -401,14 +404,12 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 }
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_NO);
-	memset(k.other, 0, sizeof(k.other));
+	w_clear(&k.MsgBuf);
 }
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_DOWN);
-	if (w_crc_check(&MsgBuf)) {
-		memcpy(k.other, MsgBuf.rows, sizeof(k.other));
-	} else {
-		memset(k.other, 0, sizeof(k.other));
+	if (!w_crc_check(&k.MsgBuf)) {
+		w_clear(&k.MsgBuf);
 	}
 }
 
