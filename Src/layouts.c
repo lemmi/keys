@@ -284,22 +284,43 @@ static uint8_t get_row(const uint16_t r) {
 }
 
 uint32_t get_rows(uint8_t dst[ROWS]) {
-	LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
-	if ((LL_GPIO_ReadInputPort(GPIOA) & 0xFF) == 0) {
-		// no buttons pressed
+	const uint16_t lyt_all_rows_left = GPIO_LEFT_0_Pin | GPIO_LEFT_1_Pin |
+	                                   GPIO_LEFT_2_Pin | GPIO_LEFT_3_Pin |
+	                                   GPIO_LEFT_4_Pin | GPIO_LEFT_5_Pin;
+	const uint16_t lyt_all_rows_right = GPIO_RIGHT_0_Pin | GPIO_RIGHT_1_Pin |
+	                                    GPIO_RIGHT_2_Pin | GPIO_RIGHT_3_Pin |
+	                                    GPIO_RIGHT_4_Pin | GPIO_RIGHT_5_Pin;
+
+	// If a button press is observed on one half, unconditionally zero the
+	// other half.  €ach half takes about 10us to scan, so this approach saves
+	// around 20us scanning time if no buttons are pressed and about 10 if
+	// there are buttons pressed over just scanning everything.
+
+	// Test left hand
+	LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows_left);
+	if ((LL_GPIO_ReadInputPort(GPIOA) & 0xFF)) {
 		LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
-		memset(dst, 0, ROWS);
-		return 0;
+		for (uint32_t r = 0; r < ROWS / 2; r++) {
+			dst[r] = get_row(ALL_ROWS[r]);
+		}
+		// this is the left board, zero the other half
+		memset(&dst[ROWS / 2], 0, ROWS / 2);
+		return 1;
+	}
+
+	// Test right hand
+	LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows_right);
+	if ((LL_GPIO_ReadInputPort(GPIOA) & 0xFF)) {
+		LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
+		for (uint32_t r = ROWS / 2; r < ROWS; r++) {
+			dst[r] = get_row(ALL_ROWS[r]);
+		}
+		// this is the right board, zero the other half
+		memset(dst, 0, ROWS / 2);
+		return 1;
 	}
 
 	LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
-
-	for (uint32_t r = 0; r < ROWS; r++) {
-		dst[r] = get_row(ALL_ROWS[r]);
-	}
-
-	// this might end up scanning nothing,
-	// but still report that we scanned everything
-
-	return 1;
+	memset(dst, 0, ROWS);
+	return 0;
 }
