@@ -13,6 +13,14 @@
 
 __IO int complete;
 
+enum {
+	TIMEOUT_HAVE_USB  = 0,
+	TIMEOUT_HAVE_UART = 1,
+	TIMEOUT_SUSPEND   = 2,
+};
+
+__IO uint32_t timeout_ctr = TIMEOUT_HAVE_USB;
+
 extern UART_HandleTypeDef huart1;
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
@@ -156,7 +164,9 @@ void app() {
 	LL_TIM_ClearFlag_UPDATE(TIM16);
 	LL_TIM_EnableIT_UPDATE(TIM16);
 
-	LL_TIM_SetUpdateSource(TIM17, LL_TIM_UPDATESOURCE_COUNTER);
+	LL_TIM_ClearFlag_UPDATE(TIM15);
+	LL_TIM_EnableIT_UPDATE(TIM15);
+
 	LL_TIM_ClearFlag_UPDATE(TIM17);
 	LL_TIM_EnableIT_UPDATE(TIM17);
 	LL_TIM_EnableCounter(TIM17);
@@ -167,8 +177,12 @@ void app() {
 }
 
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
+	LL_TIM_DisableCounter(TIM15);
+	LL_TIM_DisableCounter(TIM17);
+	TIM17->CNT = 0;
+	LL_TIM_EnableCounter(TIM17);
+	timeout_ctr = TIMEOUT_HAVE_USB;
 	LL_TIM_EnableCounter(TIM6); // Wait for 500us
-	LL_TIM_GenerateEvent_UPDATE(TIM17);
 
 	// this is possibly the best location to signal a ready to receive
 	UART_AS_RX();
@@ -192,11 +206,9 @@ void TIM6_DAC_IRQHandler(void) {
 }
 
 static void Remote_Wake() {
-	if ((GPIOA->IDR & 0xFF) == 0) {
-		// there is no button pressed that we are interested in
-		return;
-	}
+	UART_AS_SINGLE_WIRE();
 	HAL_PCD_ActivateRemoteWakeup(hUsbDeviceFS.pData);
+	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_UP);
 	LL_TIM_EnableCounter(TIM7); // Wait for 10ms
 }
 void TIM7_IRQHandler(void) {
@@ -204,27 +216,42 @@ void TIM7_IRQHandler(void) {
 	if (LL_TIM_IsActiveFlag_UPDATE(TIM7)) {
 		LL_TIM_ClearFlag_UPDATE(TIM7);
 		HAL_PCD_DeActivateRemoteWakeup(hUsbDeviceFS.pData);
+		LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_NO);
+		UART_AS_INT();
+		timeout_ctr = TIMEOUT_HAVE_USB;
+		LL_TIM_EnableCounter(TIM17); // rearm timeouts
 	}
 }
 
 static void SuspendCallback() {
 	k_clear(&k);
 	LL_TIM_EnableCounter(TIM16); // Wait for 100ms
+	UART_AS_INT();
 }
 void TIM16_IRQHandler(void) {
 	// triggered by SuspendCallback
 	if (LL_TIM_IsActiveFlag_UPDATE(TIM16)) {
 		LL_TIM_ClearFlag_UPDATE(TIM16);
-		GPIO_AS_INT();
-		LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
 	}
 }
 
+void TIM15_IRQHandler(void) {
+	if (LL_TIM_IsActiveFlag_UPDATE(TIM15)) {
+		LL_TIM_ClearFlag_UPDATE(TIM15);
+
+		GPIO_AS_INT();
+		UART_AS_INT();
+		timeout_ctr = TIMEOUT_SUSPEND;
+		LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows);
+	}
+}
 void TIM17_IRQHandler(void) {
 	if (LL_TIM_IsActiveFlag_UPDATE(TIM17)) {
-		LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_NO);
 		LL_TIM_ClearFlag_UPDATE(TIM17);
+		LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_NO);
 		UART_AS_INT();
+		timeout_ctr = TIMEOUT_HAVE_UART;
+		LL_TIM_EnableCounter(TIM15);
 	}
 }
 
@@ -335,15 +362,17 @@ static uint32_t wait_stable_idle(uint32_t t) {
 	// TODO
 	// don't loop forever, in case something pulls down the line
 	//
-	for (int i = 0; i < 8;) {
+	for (int i = 0, n = 0; n < t; n++) {
 		if (LL_GPIO_ReadInputPort(GPIOA) & LL_GPIO_PIN_9) {
-			++i;
+			if (++i > 8) {
+				return 1;
+			};
 		} else {
 			i = 0;
 		}
 	}
 
-	return 1;
+	return 0;
 }
 
 static void UART_AS_RX() {
@@ -358,7 +387,7 @@ static void UART_AS_RX() {
 	//
 	// One transfer takes about 150uS.
 	//
-	if (!wait_stable_idle(0)) {
+	if (!wait_stable_idle(256)) {
 		return;
 	}
 	HAL_HalfDuplex_EnableReceiver(&huart1);
@@ -366,6 +395,13 @@ static void UART_AS_RX() {
 }
 
 static void Report_UART() {
+	LL_TIM_DisableCounter(TIM15);
+	TIM15->CNT = 0;
+	LL_TIM_EnableCounter(TIM15);
+	timeout_ctr = TIMEOUT_HAVE_UART;
+
+	GPIO_AS_INPUT();
+
 	if (get_rows(k.MsgBuf.rows) == 0) {
 		// no need to send the state if no button is pressed
 		return;
@@ -376,7 +412,7 @@ static void Report_UART() {
 		complete = 0;
 		// also wait here for stable line, so we don't send before receiver is
 		// ready
-		if (!wait_stable_idle(0)) {
+		if (!wait_stable_idle(256)) {
 			return;
 		}
 		UART_AS_SINGLE_WIRE();
@@ -423,7 +459,16 @@ void EXTI2_3_IRQHandler(void) {
 void EXTI4_15_IRQHandler(void) {
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_9) != RESET) {
 		LL_EXTI_ClearFlag_0_31(LL_EXTI_LINE_9);
-		Report_UART();
+		switch (timeout_ctr) {
+		case TIMEOUT_HAVE_USB:
+			break;
+		case TIMEOUT_HAVE_UART:
+			Report_UART();
+			break;
+		case TIMEOUT_SUSPEND:
+			Remote_Wake();
+			break;
+		}
 		return;
 	}
 	if (LL_EXTI_IsActiveFlag_0_31(LL_EXTI_LINE_4) != RESET) {
