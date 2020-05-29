@@ -77,13 +77,13 @@ static void k_clear(Keys_t *k) {
 }
 
 static inline void
-vec_or(uint8_t *restrict dst, const uint8_t *restrict src, size_t n) {
+vec_or(uint8_t *restrict dst, const uint8_t *restrict src, const size_t n) {
 	uint32_t r;
 	// manually vectorize this, as the compiler won't do it for us...
 	for (r = 0; r + 3 < n; r += 4) {
 		*(uint32_t *) &dst[r] |= *(uint32_t *) &src[r];
 	}
-	for (; r < ROWS; r++) {
+	for (; r < n; r++) {
 		dst[r] |= src[r];
 	}
 }
