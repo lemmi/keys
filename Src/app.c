@@ -93,12 +93,14 @@ static void k_scan(Keys_t *k) {
 	get_rows(k->history[k->hist_idx]);
 }
 
-static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
+static void k_merge_history(Keys_t *k, uint8_t merged[restrict ROWS]) {
 	size_t i;
+	// merge serial data into history to get debounced
+	vec_or(k->history[k->hist_idx], k->MsgBuf.rows, ROWS);
+	// do the debounce
 	for (i = 0; i < HISTORY_SIZE; i++) {
 		vec_or(merged, k->history[i], ROWS);
 	}
-	vec_or(merged, k->MsgBuf.rows, ROWS);
 }
 
 static void k_report(Keys_t *k) {
