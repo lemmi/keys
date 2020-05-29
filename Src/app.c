@@ -96,7 +96,7 @@ static void k_scan(Keys_t *k) {
 static void k_merge_history(const Keys_t *k, uint8_t merged[restrict ROWS]) {
 	size_t i;
 	for (i = 0; i < HISTORY_SIZE; i++) {
-		vec_or(merged, k->history[k->hist_idx], ROWS);
+		vec_or(merged, k->history[i], ROWS);
 	}
 	vec_or(merged, k->MsgBuf.rows, ROWS);
 }
