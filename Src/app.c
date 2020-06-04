@@ -95,8 +95,10 @@ static void k_scan(Keys_t *k) {
 
 static void k_merge_history(Keys_t *k, uint8_t merged[restrict ROWS]) {
 	size_t i;
-	// merge serial data into history to get debounced
-	vec_or(k->history[k->hist_idx], k->MsgBuf.rows, ROWS);
+	// only merge correct serial data into history to get debounced
+	if (w_crc_check(&k->MsgBuf)) {
+		vec_or(k->history[k->hist_idx], k->MsgBuf.rows, ROWS);
+	}
 	// do the debounce
 	for (i = 0; i < HISTORY_SIZE; i++) {
 		vec_or(merged, k->history[i], ROWS);
@@ -433,9 +435,6 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
 }
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_DOWN);
-	if (!w_crc_check(&k.MsgBuf)) {
-		w_clear(&k.MsgBuf);
-	}
 }
 
 void EXTI0_1_IRQHandler(void) {
