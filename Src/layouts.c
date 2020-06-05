@@ -31,7 +31,7 @@ const Layout_t LAYOUT_DEFAULT = {
     { 0           , 0          , UKEY_TAB          , UKEY_Q                , UKEY_W         , UKEY_E           , UKEY_R         , UKEY_T        },
     { 0           , 0          , UKEY_INSERT       , UKEY_A                , UKEY_S         , UKEY_D           , UKEY_F         , UKEY_G        },
     { 0           , 0          , UKEY_LEFT_SHIFT   , UKEY_BACKSLASH_NON_US , UKEY_Z         , UKEY_X           , UKEY_C         , UKEY_V        },
-    { 0           , 0          , UKEY_LEFT_CONTROL , UKEY_RIGHT_ALT        , UKEY_LEFT_GUI  , UKEY_LEFT_ALT    , UKEY_SPACE     , UKEY_ENTER    },
+    { 0           , 0          , UKEY_LEFT_CONTROL , UKEY_PRINT            , UKEY_LEFT_GUI  , UKEY_LEFT_ALT    , UKEY_SPACE     , UKEY_ENTER    },
     /* Right hand */
     { UKEY_F07    , UKEY_F08   , UKEY_B            , UKEY_F09              , UKEY_F10       , UKEY_F11         , UKEY_F12       , UKEY_PAD_NUM  },
     { UKEY_6      , UKEY_7     , UKEY_8            , UKEY_9                , UKEY_0         , UKEY_MINUS       , UKEY_EQUAL     , UKEY_HOME     },
@@ -48,7 +48,7 @@ const Layout_t LAYOUT_DEFAULT_NUM = {
     { 0            , 0            , UKEY_TAB           , UKEY_Q                , UKEY_W         , UKEY_E           , UKEY_R         , UKEY_T        },
     { 0            , 0            , UKEY_INSERT        , UKEY_A                , UKEY_S         , UKEY_D           , UKEY_F         , UKEY_G        },
     { 0            , 0            , UKEY_LEFT_SHIFT    , UKEY_BACKSLASH_NON_US , UKEY_Z         , UKEY_X           , UKEY_C         , UKEY_V        },
-    { 0            , 0            , UKEY_LEFT_CONTROL  , UKEY_RIGHT_ALT        , UKEY_LEFT_GUI  , UKEY_LEFT_ALT    , UKEY_SPACE     , UKEY_ENTER    },
+    { 0            , 0            , UKEY_LEFT_CONTROL  , UKEY_PRINT            , UKEY_LEFT_GUI  , UKEY_LEFT_ALT    , UKEY_SPACE     , UKEY_ENTER    },
     /* Right hand */
     { UKEY_F07     , UKEY_F08     , UKEY_DELETE        , UKEY_F09              , UKEY_F10       , UKEY_F11         , UKEY_F12       , UKEY_PAD_NUM  },
     { UKEY_PAD_NUM , UKEY_PAD_DIV , UKEY_PAD_MUL       , UKEY_PAD_SUB          , UKEY_0         , UKEY_MINUS       , UKEY_EQUAL     , UKEY_HOME     },
@@ -73,7 +73,7 @@ const uint16_t ALL_ROWS[2*ROWS] = {
     GPIO_RIGHT_5_Pin,
 };
 
-const uint16_t lyt_all_rows = 
+const uint16_t lyt_all_rows =
 GPIO_LEFT_0_Pin | GPIO_LEFT_1_Pin | GPIO_LEFT_2_Pin |
 GPIO_LEFT_3_Pin | GPIO_LEFT_4_Pin | GPIO_LEFT_5_Pin |
 GPIO_RIGHT_0_Pin | GPIO_RIGHT_1_Pin | GPIO_RIGHT_2_Pin |
