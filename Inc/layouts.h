@@ -148,14 +148,14 @@ typedef uint8_t Layout_t[ROWS][COLS];
 
 extern const uint16_t lyt_all_rows;
 
-uint32_t        get_rows(uint8_t[ROWS]);
+uint32_t        get_rows(uint8_t[static ROWS]);
 uint8_t         lyt_select_layout();
 const Layout_t *lyt_get_layout(uint8_t);
 const Layout_t *lyt_get_layout_num(uint8_t);
 
 uint8_t lyt_report_boot(const Layout_t *layout,
                         uint8_t         report[8],
-                        const uint8_t   rows[ROWS]);
+                        const uint8_t   rows[static ROWS]);
 uint8_t
-lyt_report_bits(const Layout_t *layout, Bits_t bs, const uint8_t rows[ROWS]);
+lyt_report_bits(const Layout_t *layout, Bits_t bs, const uint8_t rows[static ROWS]);
 #endif

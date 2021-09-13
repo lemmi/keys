@@ -130,7 +130,7 @@ static uint8_t lyt_is_modkey(const uint8_t k) {
 
 uint8_t lyt_report_boot(const Layout_t *layout,
                         uint8_t         report[8],
-                        const uint8_t   rows[ROWS]) {
+                        const uint8_t   rows[static ROWS]) {
 	uint8_t  n      = 0;
 	uint8_t *moddst = NULL;
 	uint8_t *dst    = NULL;
@@ -184,7 +184,7 @@ uint8_t lyt_report_boot(const Layout_t *layout,
 
 uint8_t lyt_report_bits(const Layout_t *layout,
                         Bits_t          report,
-                        const uint8_t   rows[ROWS]) {
+                        const uint8_t   rows[static ROWS]) {
 	uint8_t n = 0;
 
 	for (uint8_t r = 0; r < ROWS; r++) {
@@ -215,7 +215,7 @@ uint8_t lyt_report_bits(const Layout_t *layout,
 }
 
 static uint8_t lyt_count_pressed(const Layout_t *layout,
-                                 const uint8_t   rows[ROWS]) {
+                                 const uint8_t   rows[static ROWS]) {
 	return lyt_report_bits(layout, NULL, rows);
 }
 
@@ -283,7 +283,7 @@ static uint8_t get_row(const uint16_t r) {
 	return ret;
 }
 
-uint32_t get_rows(uint8_t dst[ROWS]) {
+uint32_t get_rows(uint8_t dst[static ROWS]) {
 	const uint16_t lyt_all_rows_left = GPIO_LEFT_0_Pin | GPIO_LEFT_1_Pin |
 	                                   GPIO_LEFT_2_Pin | GPIO_LEFT_3_Pin |
 	                                   GPIO_LEFT_4_Pin | GPIO_LEFT_5_Pin;

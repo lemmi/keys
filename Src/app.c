@@ -93,7 +93,7 @@ static void k_scan(Keys_t *k) {
 	get_rows(k->history[k->hist_idx]);
 }
 
-static void k_merge_history(Keys_t *k, uint8_t merged[restrict ROWS]) {
+static void k_merge_history(Keys_t *k, uint8_t merged[static restrict ROWS]) {
 	size_t i;
 	// only merge correct serial data into history to get debounced
 	if (w_crc_check(&k->MsgBuf)) {
