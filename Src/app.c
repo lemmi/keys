@@ -9,7 +9,7 @@
 
 // prefer powers of two to nearby integers.  produces smaller and faster code,
 // as this architecture has no division or modulus
-#define HISTORY_SIZE 4
+#define HISTORY_SIZE 4ul
 
 __IO int complete;
 
@@ -42,9 +42,9 @@ typedef union {
 
 static uint32_t crc(const uint8_t *data, const size_t n) {
 	LL_CRC_ResetCRCCalculationUnit(CRC);
-	int i = 0;
+	size_t i = 0ul;
 	// saves 6µS
-	for (; i + 3 < n; i += 4) {
+	for (; i + 3ul < n; i += 4ul) {
 		LL_CRC_FeedData32(CRC, *(const uint32_t *) &data[i]);
 	}
 	for (; i < n; i++) {
@@ -78,9 +78,9 @@ static void k_clear(Keys_t *k) {
 
 static inline void
 vec_or(uint8_t *restrict dst, const uint8_t *restrict src, const size_t n) {
-	uint32_t r;
+	size_t r;
 	// manually vectorize this, as the compiler won't do it for us...
-	for (r = 0; r + 3 < n; r += 4) {
+	for (r = 0ul; r + 3ul < n; r += 4ul) {
 		*(uint32_t *) &dst[r] |= *(uint32_t *) &src[r];
 	}
 	for (; r < n; r++) {
@@ -89,7 +89,7 @@ vec_or(uint8_t *restrict dst, const uint8_t *restrict src, const size_t n) {
 }
 
 static void k_scan(Keys_t *k) {
-	k->hist_idx = (k->hist_idx + 1) % HISTORY_SIZE;
+	k->hist_idx = (k->hist_idx + 1u) % HISTORY_SIZE;
 	get_rows(k->history[k->hist_idx]);
 }
 
@@ -100,7 +100,7 @@ static void k_merge_history(Keys_t *k, uint8_t merged[static restrict ROWS]) {
 		vec_or(k->history[k->hist_idx], k->MsgBuf.rows, ROWS);
 	}
 	// do the debounce
-	for (i = 0; i < HISTORY_SIZE; i++) {
+	for (i = 0ul; i < HISTORY_SIZE; i++) {
 		vec_or(merged, k->history[i], ROWS);
 	}
 }
@@ -120,23 +120,23 @@ static void k_report(Keys_t *k) {
 		return;
 	}
 
-	if (hhid->Report_buf[0] & 1) {
+	if (hhid->Report_buf[0ul] & 1u) {
 		// NumLock
 		layout = lyt_get_layout_num(k->layout_idx);
 	} else {
 		layout = lyt_get_layout(k->layout_idx);
 	}
 
-	if (hhid->Protocol == 0) {
+	if (hhid->Protocol == 0u) {
 		// handle boot protocol
-		uint8_t report[8] = {0};
+		uint8_t report[8ul] = {0};
 		lyt_report_boot(layout, report, merged);
 		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, report, sizeof(report));
 	} else {
 		// handle report protocol
 		Bits_t report_bits = {0};
 		lyt_report_bits(layout, report_bits, merged);
-		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, (uint8_t *) report_bits, 29);
+		USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, (uint8_t *) report_bits, 29u);
 	}
 }
 
@@ -181,9 +181,11 @@ void app() {
 }
 
 static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
+	UNUSED(pdev);
+
 	LL_TIM_DisableCounter(TIM15);
 	LL_TIM_DisableCounter(TIM17);
-	TIM17->CNT = 0;
+	TIM17->CNT = 0u;
 	LL_TIM_EnableCounter(TIM17);
 	timeout_ctr = TIMEOUT_HAVE_USB;
 	LL_TIM_EnableCounter(TIM6); // Wait for 500us
@@ -193,7 +195,7 @@ static uint8_t SOFCallback(USBD_HandleTypeDef *pdev) {
 
 	HAL_UART_Receive_DMA(&huart1, k.MsgBuf.bytes, sizeof(k.MsgBuf.bytes));
 
-	return 0;
+	return 0u;
 }
 void TIM6_DAC_IRQHandler(void) {
 	// triggered by SOFCallback
@@ -362,21 +364,21 @@ static void UART_AS_TX() {
 }
 
 static uint32_t wait_stable_idle(uint32_t t) {
-	UNUSED(t);
+	//UNUSED(t);
 	// TODO
 	// don't loop forever, in case something pulls down the line
 	//
-	for (int i = 0, n = 0; n < t; n++) {
+	for (uint32_t i = 0u, n = 0u; n < t; n++) {
 		if (LL_GPIO_ReadInputPort(GPIOA) & LL_GPIO_PIN_9) {
-			if (++i > 8) {
-				return 1;
+			if (++i > 8u) {
+				return 1u;
 			};
 		} else {
-			i = 0;
+			i = 0u;
 		}
 	}
 
-	return 0;
+	return 0u;
 }
 
 static void UART_AS_RX() {
@@ -391,7 +393,7 @@ static void UART_AS_RX() {
 	//
 	// One transfer takes about 150uS.
 	//
-	if (!wait_stable_idle(256)) {
+	if (!wait_stable_idle(256u)) {
 		return;
 	}
 	HAL_HalfDuplex_EnableReceiver(&huart1);
@@ -400,13 +402,13 @@ static void UART_AS_RX() {
 
 static void Report_UART() {
 	LL_TIM_DisableCounter(TIM15);
-	TIM15->CNT = 0;
+	TIM15->CNT = 0u;
 	LL_TIM_EnableCounter(TIM15);
 	timeout_ctr = TIMEOUT_HAVE_UART;
 
 	GPIO_AS_INPUT();
 
-	if (get_rows(k.MsgBuf.rows) == 0) {
+	if (get_rows(k.MsgBuf.rows) == 0u) {
 		// no need to send the state if no button is pressed
 		return;
 	}
@@ -416,7 +418,7 @@ static void Report_UART() {
 		complete = 0;
 		// also wait here for stable line, so we don't send before receiver is
 		// ready
-		if (!wait_stable_idle(256)) {
+		if (!wait_stable_idle(256u)) {
 			return;
 		}
 		UART_AS_SINGLE_WIRE();
@@ -426,14 +428,20 @@ static void Report_UART() {
 }
 
 void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+	UNUSED(huart);
+
 	complete = 1;
 	UART_AS_INT();
 }
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+	UNUSED(huart);
+
 	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_NO);
 	w_clear(&k.MsgBuf);
 }
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+	UNUSED(huart);
+
 	LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_9, LL_GPIO_PULL_DOWN);
 }
 

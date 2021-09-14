@@ -9,29 +9,29 @@
 // clang-format off
 const Layout_t LAYOUT_SELECT = {
     /* Left hand */
-    { 0, 0, 0, 0, 0, 0, 0, 0},
-    { 1, 2, 3, 4, 5, 6, 7, 8},
-    { 9,10,11,12,13,14,15,16},
-    {17,18,19,20,21,22,23,24},
-    {25,26,27,28,29,30,31,32},
-    {33,34,35,36,37,38,39,40},
-    /* Right hand */
-    { 0, 0, 0, 0, 0, 0, 0, 0},
-    { 1, 2, 3, 4, 5, 6, 7, 8},
-    { 9,10,11,12,13,14,15,16},
-    {17,18,19,20,21,22,23,24},
-    {25,26,27,28,29,30,31,32},
-    {33,34,35,36,37,38,39,40},
+    { 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u},
+    { 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u},
+    { 9u,10u,11u,12u,13u,14u,15u,16u},
+    {17u,18u,19u,20u,21u,22u,23u,24u},
+    {25u,26u,27u,28u,29u,30u,31u,32u},
+    {33u,34u,35u,36u,37u,38u,39u,40u},
+    /* Right hand */                
+    { 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u},
+    { 1u, 2u, 3u, 4u, 5u, 6u, 7u, 8u},
+    { 9u,10u,11u,12u,13u,14u,15u,16u},
+    {17u,18u,19u,20u,21u,22u,23u,24u},
+    {25u,26u,27u,28u,29u,30u,31u,32u},
+    {33u,34u,35u,36u,37u,38u,39u,40u},
 };
 
 const Layout_t LAYOUT_DEFAULT = {
     /* Left hand */
     { UKEY_ESCAPE , UKEY_F01   , UKEY_F02          , UKEY_F03              , UKEY_F04       , UKEY_B           , UKEY_F05       , UKEY_F06      },
-    { 0           , 0          , UKEY_GRAVE        , UKEY_1                , UKEY_2         , UKEY_3           , UKEY_4         , UKEY_5        },
-    { 0           , 0          , UKEY_TAB          , UKEY_Q                , UKEY_W         , UKEY_E           , UKEY_R         , UKEY_T        },
-    { 0           , 0          , UKEY_INSERT       , UKEY_A                , UKEY_S         , UKEY_D           , UKEY_F         , UKEY_G        },
-    { 0           , 0          , UKEY_LEFT_SHIFT   , UKEY_BACKSLASH_NON_US , UKEY_Z         , UKEY_X           , UKEY_C         , UKEY_V        },
-    { 0           , 0          , UKEY_LEFT_CONTROL , UKEY_PRINT            , UKEY_LEFT_GUI  , UKEY_LEFT_ALT    , UKEY_SPACE     , UKEY_ENTER    },
+    { 0u          , 0u         , UKEY_GRAVE        , UKEY_1                , UKEY_2         , UKEY_3           , UKEY_4         , UKEY_5        },
+    { 0u          , 0u         , UKEY_TAB          , UKEY_Q                , UKEY_W         , UKEY_E           , UKEY_R         , UKEY_T        },
+    { 0u          , 0u         , UKEY_INSERT       , UKEY_A                , UKEY_S         , UKEY_D           , UKEY_F         , UKEY_G        },
+    { 0u          , 0u         , UKEY_LEFT_SHIFT   , UKEY_BACKSLASH_NON_US , UKEY_Z         , UKEY_X           , UKEY_C         , UKEY_V        },
+    { 0u          , 0u         , UKEY_LEFT_CONTROL , UKEY_PRINT            , UKEY_LEFT_GUI  , UKEY_LEFT_ALT    , UKEY_SPACE     , UKEY_ENTER    },
     /* Right hand */
     { UKEY_F07    , UKEY_F08   , UKEY_B            , UKEY_F09              , UKEY_F10       , UKEY_F11         , UKEY_F12       , UKEY_PAD_NUM  },
     { UKEY_6      , UKEY_7     , UKEY_8            , UKEY_9                , UKEY_0         , UKEY_MINUS       , UKEY_EQUAL     , UKEY_HOME     },
@@ -44,11 +44,11 @@ const Layout_t LAYOUT_DEFAULT = {
 const Layout_t LAYOUT_DEFAULT_NUM = {
     /* Left hand */
     { UKEY_ESCAPE  , UKEY_F01     , UKEY_F02           , UKEY_F03              , UKEY_F04       , UKEY_B           , UKEY_F05       , UKEY_F06      },
-    { 0            , 0            , UKEY_GRAVE         , UKEY_1                , UKEY_2         , UKEY_3           , UKEY_4         , UKEY_5        },
-    { 0            , 0            , UKEY_TAB           , UKEY_Q                , UKEY_W         , UKEY_E           , UKEY_R         , UKEY_T        },
-    { 0            , 0            , UKEY_INSERT        , UKEY_A                , UKEY_S         , UKEY_D           , UKEY_F         , UKEY_G        },
-    { 0            , 0            , UKEY_LEFT_SHIFT    , UKEY_BACKSLASH_NON_US , UKEY_Z         , UKEY_X           , UKEY_C         , UKEY_V        },
-    { 0            , 0            , UKEY_LEFT_CONTROL  , UKEY_PRINT            , UKEY_LEFT_GUI  , UKEY_LEFT_ALT    , UKEY_SPACE     , UKEY_ENTER    },
+    { 0u           , 0u           , UKEY_GRAVE         , UKEY_1                , UKEY_2         , UKEY_3           , UKEY_4         , UKEY_5        },
+    { 0u           , 0u           , UKEY_TAB           , UKEY_Q                , UKEY_W         , UKEY_E           , UKEY_R         , UKEY_T        },
+    { 0u           , 0u           , UKEY_INSERT        , UKEY_A                , UKEY_S         , UKEY_D           , UKEY_F         , UKEY_G        },
+    { 0u           , 0u           , UKEY_LEFT_SHIFT    , UKEY_BACKSLASH_NON_US , UKEY_Z         , UKEY_X           , UKEY_C         , UKEY_V        },
+    { 0u           , 0u           , UKEY_LEFT_CONTROL  , UKEY_PRINT            , UKEY_LEFT_GUI  , UKEY_LEFT_ALT    , UKEY_SPACE     , UKEY_ENTER    },
     /* Right hand */
     { UKEY_F07     , UKEY_F08     , UKEY_DELETE        , UKEY_F09              , UKEY_F10       , UKEY_F11         , UKEY_F12       , UKEY_PAD_NUM  },
     { UKEY_PAD_NUM , UKEY_PAD_DIV , UKEY_PAD_MUL       , UKEY_PAD_SUB          , UKEY_0         , UKEY_MINUS       , UKEY_EQUAL     , UKEY_HOME     },
@@ -120,7 +120,7 @@ static uint8_t lyt_modmask(const uint8_t k) {
 	case UKEY_RIGHT_ALT:
 		return UKEY_BIT_RIGHT_ALT;
 	default:
-		return 0;
+		return 0u;
 	}
 }
 
@@ -131,24 +131,24 @@ static uint8_t lyt_is_modkey(const uint8_t k) {
 uint8_t lyt_report_boot(const Layout_t *layout,
                         uint8_t         report[8],
                         const uint8_t   rows[static ROWS]) {
-	uint8_t  n      = 0;
+	uint8_t  n      = 0u;
 	uint8_t *moddst = NULL;
 	uint8_t *dst    = NULL;
 
 	if (report != NULL) {
-		moddst = &report[0];
-		dst    = &report[2];
+		moddst = &report[0u];
+		dst    = &report[2u];
 	}
 
-	for (uint8_t r = 0; r < ROWS; r++) {
-		if (rows[r] == 0) {
+	for (uint8_t r = 0u; r < ROWS; r++) {
+		if (rows[r] == 0u) {
 			continue;
 		}
 
-		for (uint8_t c = 0; c < COLS; c++) {
+		for (uint8_t c = 0u; c < COLS; c++) {
 			uint8_t key;
 
-			if (!(rows[r] & (1 << c))) {
+			if (!(rows[r] & (1u << c))) {
 				continue;
 			}
 
@@ -164,11 +164,11 @@ uint8_t lyt_report_boot(const Layout_t *layout,
 				continue;
 			}
 
-			if (n == 6) {
+			if (n == 6u) {
 				if (dst != NULL) {
-					memset(dst, UKEY_ERROR_ROLL_OVER, 6);
+					memset(dst, UKEY_ERROR_ROLL_OVER, 6ul);
 				}
-				return 6;
+				return 6u;
 			}
 
 			if (dst != NULL) {
@@ -185,17 +185,17 @@ uint8_t lyt_report_boot(const Layout_t *layout,
 uint8_t lyt_report_bits(const Layout_t *layout,
                         Bits_t          report,
                         const uint8_t   rows[static ROWS]) {
-	uint8_t n = 0;
+	uint8_t n = 0u;
 
-	for (uint8_t r = 0; r < ROWS; r++) {
-		if (rows[r] == 0) {
+	for (uint8_t r = 0u; r < ROWS; r++) {
+		if (rows[r] == 0u) {
 			continue;
 		}
 
-		for (uint8_t c = 0; c < COLS; c++) {
+		for (uint8_t c = 0u; c < COLS; c++) {
 			uint8_t key;
 
-			if (!(rows[r] & (1 << c))) {
+			if (!(rows[r] & (1u << c))) {
 				continue;
 			}
 
@@ -222,33 +222,33 @@ static uint8_t lyt_count_pressed(const Layout_t *layout,
 uint8_t lyt_select_layout() {
 	uint8_t rows[ROWS];
 	uint8_t report[8];
-	uint8_t layout_idx = 0;
+	uint8_t layout_idx = 0u;
 
 	// check if we have a layout saved to flash
 	{
 		uint16_t saved = flash_layout_load();
 		if (saved != 0xFFFFU) {
-			layout_idx = (saved >> 0) & 0xFF;
-			if (layout_idx > 0 && layout_idx < N_Layouts) {
+			layout_idx = saved & 0xFFU;
+			if (layout_idx > 0u && layout_idx < N_Layouts) {
 				return layout_idx;
 			}
 		}
 	}
 
-	while (1) {
-		HAL_Delay(1);
+	while (1u) {
+		HAL_Delay(1u);
 		get_rows(rows);
 
 		// wait until there is only a single button pressed
-		if (lyt_report_boot(Layouts[0], report, rows) != 1) {
+		if (lyt_report_boot(Layouts[0u], report, rows) != 1u) {
 			continue;
 		}
 
 		// get the selected layout
-		layout_idx = report[2];
+		layout_idx = report[2u];
 
 		// check if there is a valid layout for the pressed button
-		if (layout_idx > 0 && layout_idx < N_Layouts) {
+		if (layout_idx > 0u && layout_idx < N_Layouts) {
 			break;
 		}
 	}
@@ -258,9 +258,9 @@ uint8_t lyt_select_layout() {
 
 	// wait until no button is pressed, otherwise we start typing right away
 	do {
-		HAL_Delay(1);
+		HAL_Delay(1u);
 		get_rows(rows);
-	} while (lyt_count_pressed(lyt_get_layout(layout_idx), rows) > 0);
+	} while (lyt_count_pressed(lyt_get_layout(layout_idx), rows) > 0u);
 
 	return layout_idx;
 }
@@ -269,13 +269,13 @@ static uint8_t get_row(const uint16_t r) {
 	uint8_t ret;
 
 	// wait until evenything is drained
-	while (LL_GPIO_ReadInputPort(GPIOA) & 0xFF) {}
+	while (LL_GPIO_ReadInputPort(GPIOA) & 0xFFU) {}
 
 	// select the row to scan
 	LL_GPIO_SetOutputPin(GPIOB, r);
 
 	// read out all the pressed buttons in the selected row
-	ret = (uint8_t)(LL_GPIO_ReadInputPort(GPIOA) & 0xFF);
+	ret = (uint8_t)(LL_GPIO_ReadInputPort(GPIOA) & 0xFFU);
 
 	// deselct the row
 	LL_GPIO_ResetOutputPin(GPIOB, r);
@@ -298,29 +298,29 @@ uint32_t get_rows(uint8_t dst[static ROWS]) {
 
 	// Test left hand
 	LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows_left);
-	if ((LL_GPIO_ReadInputPort(GPIOA) & 0xFF)) {
+	if ((LL_GPIO_ReadInputPort(GPIOA) & 0xFFU)) {
 		LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
-		for (uint32_t r = 0; r < ROWS / 2; r++) {
+		for (uint32_t r = 0u; r < ROWS / 2u; r++) {
 			dst[r] = get_row(ALL_ROWS[r]);
 		}
 		// this is the left board, zero the other half
-		memset(&dst[ROWS / 2], 0, ROWS / 2);
-		return 1;
+		memset(&dst[ROWS / 2u], 0, ROWS / 2u);
+		return 1u;
 	}
 
 	// Test right hand
 	LL_GPIO_SetOutputPin(GPIOB, lyt_all_rows_right);
-	if ((LL_GPIO_ReadInputPort(GPIOA) & 0xFF)) {
+	if ((LL_GPIO_ReadInputPort(GPIOA) & 0xFFU)) {
 		LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
-		for (uint32_t r = ROWS / 2; r < ROWS; r++) {
+		for (uint32_t r = ROWS / 2u; r < ROWS; r++) {
 			dst[r] = get_row(ALL_ROWS[r]);
 		}
 		// this is the right board, zero the other half
-		memset(dst, 0, ROWS / 2);
-		return 1;
+		memset(dst, 0, ROWS / 2u);
+		return 1u;
 	}
 
 	LL_GPIO_ResetOutputPin(GPIOB, lyt_all_rows);
 	memset(dst, 0, ROWS);
-	return 0;
+	return 0u;
 }
